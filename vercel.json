@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "nodeVersion": "22.x",
   "buildCommand": "bun run build",
   "installCommand": "bun install",
   "builds": [
