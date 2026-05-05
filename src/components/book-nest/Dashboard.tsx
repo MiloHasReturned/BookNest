@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import {
   CalendarPlus2,
   ChevronRight,
+  LogOut,
   Mail,
   Search,
   SlidersHorizontal,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react'
 import { type CSSProperties, type ReactNode, useDeferredValue, useId, useState } from 'react'
 import { AnimatedBackdrop } from '#/components/book-nest/AnimatedBackdrop'
+import { GoogleSignInButton } from '#/components/book-nest/GoogleSignInButton'
 import { useBookNest } from '#/components/book-nest/BookNestProvider'
 import {
   type AccountProfile,
@@ -28,6 +30,7 @@ export function BookNestDashboard() {
     snapshot,
     acceptInvite,
     applyPreset,
+    clearAccountProfile,
     clearInvites,
     createCalendar,
     deleteCalendar,
@@ -108,7 +111,7 @@ export function BookNestDashboard() {
                   label={snapshot.accountProfile.username}
                   className="avatar-shell avatar-shell--large"
                 />
-                <div>
+                <div className="account-details">
                   <p className="account-name">{snapshot.accountProfile.username}</p>
                   {snapshot.accountProfile.email ? (
                     <p className="account-meta">{snapshot.accountProfile.email}</p>
@@ -120,6 +123,14 @@ export function BookNestDashboard() {
                   onClick={() => setShowAccountEditor(true)}
                 >
                   Edit
+                </button>
+                <button
+                  type="button"
+                  className="text-button text-button--muted"
+                  onClick={clearAccountProfile}
+                >
+                  <LogOut size={14} />
+                  Sign out
                 </button>
               </div>
             </section>
@@ -323,6 +334,10 @@ export function BookNestDashboard() {
           profile={snapshot.accountProfile}
           onClose={() => setShowAccountEditor(false)}
           onSave={(profile) => {
+            saveAccountProfile(profile)
+            setShowAccountEditor(false)
+          }}
+          onGoogleSignIn={(profile) => {
             saveAccountProfile(profile)
             setShowAccountEditor(false)
           }}
@@ -626,10 +641,12 @@ function AccountModal({
   profile,
   onClose,
   onSave,
+  onGoogleSignIn,
 }: {
   profile: AccountProfile | null
   onClose: () => void
   onSave: (profile: AccountProfile) => void
+  onGoogleSignIn: (profile: AccountProfile) => void
 }) {
   const [email, setEmail] = useState(profile?.email ?? '')
   const [username, setUsername] = useState(profile?.username ?? '')
@@ -653,7 +670,15 @@ function AccountModal({
           })
         }}
       >
-        <h2 className="modal-title">Create Account</h2>
+        <h2 className="modal-title">{profile ? 'Edit Account' : 'Create Account'}</h2>
+
+        <GoogleSignInButton onSignIn={onGoogleSignIn} />
+
+        <div className="auth-divider" aria-hidden="true">
+          <span />
+          <strong>or</strong>
+          <span />
+        </div>
 
         <label className="form-field">
           <span>Email (optional)</span>

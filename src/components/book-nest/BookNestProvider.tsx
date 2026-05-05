@@ -29,6 +29,7 @@ type BookNestContextValue = {
   snapshot: BookNestSnapshot
   createCalendar: (name: string, tintIndex: number) => void
   saveAccountProfile: (profile: AccountProfile) => void
+  clearAccountProfile: () => void
   deleteCalendar: (calendarId: string) => void
   leaveCalendar: (calendarId: string) => void
   acceptInvite: (inviteId: string) => void
@@ -112,6 +113,13 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           username: profile.username.trim(),
           imageData: profile.imageData,
         },
+      }))
+    },
+    clearAccountProfile() {
+      window.google?.accounts?.id?.disableAutoSelect()
+      setSnapshot((current) => ({
+        ...current,
+        accountProfile: null,
       }))
     },
     deleteCalendar(calendarId) {

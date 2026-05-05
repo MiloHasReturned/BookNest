@@ -318,6 +318,11 @@ textarea {
   gap: 0.9rem;
 }
 
+.account-details {
+  min-width: 0;
+  flex: 1;
+}
+
 .avatar-shell,
 .person-avatar,
 .chat-avatar,
@@ -352,6 +357,42 @@ textarea {
   height: 72px;
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+.google-auth-panel {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--theme-box) 78%, transparent);
+  padding: 0.85rem;
+}
+
+.google-button-host {
+  min-height: 44px;
+}
+
+.google-auth-error {
+  margin: 0;
+  color: #b94d5f;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.auth-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auth-divider span {
+  height: 1px;
+  background: var(--line-soft);
 }
 
 .account-name,
@@ -1257,6 +1298,7 @@ textarea {
 @media (max-width: 900px) {
   .site-header__nav,
   .site-footer__inner,
+  .account-row,
   .modal-headline,
   .calendar-detail-header,
   .quick-actions-row,
