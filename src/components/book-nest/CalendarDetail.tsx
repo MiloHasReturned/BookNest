@@ -47,6 +47,7 @@ export function BookNestCalendarDetail({
     addReaction,
     removeReservation,
     sendMessage,
+    syncCloudData,
     updateDayNote,
     upsertReservation,
   } = useBookNest()
@@ -497,13 +498,21 @@ export function BookNestCalendarDetail({
         <InviteModal
           calendarName={calendar.name}
           onClose={() => setShowInviteModal(false)}
-          onCreateLink={() =>
-            createCalendarInviteUrl({
+          onCreateLink={async () => {
+            const synced = await syncCloudData()
+
+            if (!synced) {
+              throw new Error(
+                'Cloud sync is not ready yet. Check Supabase env vars, redeploy, then try inviting again.',
+              )
+            }
+
+            return createCalendarInviteUrl({
               calendarId: calendar.id,
               calendarName: calendar.name,
               senderName: senderDisplayName,
             })
-          }
+          }}
         />
       ) : null}
 
@@ -528,11 +537,12 @@ function InviteModal({
 }: {
   calendarName: string
   onClose: () => void
-  onCreateLink: () => string
+  onCreateLink: () => Promise<string>
 }) {
   const [recipient, setRecipient] = useState('')
   const [inviteLink, setInviteLink] = useState('')
   const [copyStatus, setCopyStatus] = useState('')
+  const [isCreatingLink, setIsCreatingLink] = useState(false)
   const canEmailRecipient = /\S+@\S+\.\S+/.test(recipient.trim())
 
   async function copyInviteLink(link: string) {
@@ -544,10 +554,19 @@ function InviteModal({
     }
   }
 
-  function createLink() {
-    const link = onCreateLink()
-    setInviteLink(link)
-    void copyInviteLink(link)
+  async function createLink() {
+    setIsCreatingLink(true)
+    setCopyStatus('Saving calendar to cloud before creating the invite...')
+
+    try {
+      const link = await onCreateLink()
+      setInviteLink(link)
+      await copyInviteLink(link)
+    } catch (error) {
+      setCopyStatus(error instanceof Error ? error.message : 'Could not create invite link.')
+    } finally {
+      setIsCreatingLink(false)
+    }
   }
 
   return (
@@ -557,7 +576,7 @@ function InviteModal({
           className="modal-form"
           onSubmit={(event) => {
             event.preventDefault()
-            createLink()
+            void createLink()
           }}
         >
           <h2 className="modal-title">Invite to {calendarName}</h2>
@@ -606,10 +625,16 @@ function InviteModal({
           <button
             type="submit"
             className="action-button action-button--primary"
-            disabled={!recipient.trim()}
+            disabled={!recipient.trim() || isCreatingLink}
           >
             <PartyPopper size={16} />
-            <span>{inviteLink ? 'Create New Invite Link' : 'Create Invite Link'}</span>
+            <span>
+              {isCreatingLink
+                ? 'Creating Invite Link...'
+                : inviteLink
+                  ? 'Create New Invite Link'
+                  : 'Create Invite Link'}
+            </span>
           </button>
         </form>
       </div>

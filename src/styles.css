@@ -213,6 +213,10 @@ textarea {
   padding: 1.2rem;
 }
 
+.cloud-status-card {
+  border-color: color-mix(in oklab, #ffb15d 56%, var(--theme-border-start));
+}
+
 .book-card--hero {
   display: flex;
   justify-content: space-between;

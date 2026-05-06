@@ -40,6 +40,8 @@ export function BookNestDashboard() {
     applyPreset,
     clearAccountProfile,
     clearInvites,
+    cloudError,
+    cloudStatus,
     createCalendar,
     createInvite,
     deleteCalendar,
@@ -129,6 +131,15 @@ export function BookNestDashboard() {
               <SlidersHorizontal size={18} strokeWidth={2.2} />
             </button>
           </section>
+
+          {cloudStatus === 'error' && cloudError ? (
+            <section className="book-card cloud-status-card rise-in">
+              <div>
+                <h2 className="section-heading">Cloud Sync Needs Attention</h2>
+                <p className="account-meta">{cloudError}</p>
+              </div>
+            </section>
+          ) : null}
 
           <section className="book-card rise-in" style={{ animationDelay: '70ms' }}>
             <div className="action-grid">
