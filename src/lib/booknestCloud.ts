@@ -75,6 +75,13 @@ type AcceptCloudCalendarInviteInput = {
   calendarId?: string | null
 }
 
+type CreateCloudCalendarInviteInput = {
+  idToken?: string | null
+  calendarId?: string | null
+  recipientEmail?: string | null
+  senderName?: string | null
+}
+
 export const loadCloudSnapshot = createServerFn({ method: 'POST' })
   .inputValidator((input: LoadCloudSnapshotInput) => input)
   .handler(async ({ data }) => {
@@ -234,6 +241,71 @@ export const saveCloudSnapshot = createServerFn({ method: 'POST' })
     await upsertAcceptedMemberships(user.email, snapshot)
     await upsertVisibleCalendarStates(user.email, snapshot)
     await deleteRemovedOwnedCalendars(user.email, snapshot)
+
+    return {
+      ok: true,
+    }
+  })
+
+export const createCloudCalendarInvite = createServerFn({ method: 'POST' })
+  .inputValidator((input: CreateCloudCalendarInviteInput) => input)
+  .handler(async ({ data }) => {
+    const { idToken, calendarId, recipientEmail, senderName } = data
+    const normalizedRecipient = recipientEmail?.trim().toLowerCase()
+
+    if (!idToken || !calendarId || !normalizedRecipient) {
+      return {
+        ok: false,
+        reason: 'missing-data',
+      }
+    }
+
+    const user = await verifyGoogleIdToken(idToken)
+    if (normalizedRecipient === user.email) {
+      return {
+        ok: false,
+        reason: 'self-invite',
+      }
+    }
+
+    const calendars = await getCalendarsByIds([calendarId])
+    const calendar = calendars[0]
+
+    if (!calendar) {
+      return {
+        ok: false,
+        reason: 'calendar-not-found',
+      }
+    }
+
+    const memberships = await getMemberships(user.email)
+    const canInvite =
+      calendar.owner_email === user.email ||
+      memberships.some((membership) => membership.calendar_id === calendarId)
+
+    if (!canInvite) {
+      return {
+        ok: false,
+        reason: 'not-a-member',
+      }
+    }
+
+    await supabaseRequest<SupabaseInviteRow[]>(
+      'booknest_invites',
+      {
+        method: 'POST',
+        body: JSON.stringify([
+          {
+            id: globalThis.crypto.randomUUID(),
+            calendar_id: calendarId,
+            recipient_email: normalizedRecipient,
+            sender_email: user.email,
+            sender_name: senderName?.trim() || user.name || 'Someone',
+            status: 'pending',
+          },
+        ]),
+      },
+    )
 
     return {
       ok: true,

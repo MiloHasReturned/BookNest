@@ -33,6 +33,8 @@ import {
   resolvedEndDate,
   weekdaySymbols,
 } from '#/lib/booknest'
+import { createCloudCalendarInvite } from '#/lib/booknestCloud'
+import { readGoogleIdToken } from '#/lib/googleSession'
 import { createCalendarInviteUrl } from '#/lib/inviteLinks'
 
 const REACTIONS = ['👍', '🔥', '✅', '🎉', '❤️', '👀']
@@ -527,7 +529,7 @@ export function BookNestCalendarDetail({
         <InviteModal
           calendarName={calendar.name}
           onClose={() => setShowInviteModal(false)}
-          onCreateLink={async () => {
+          onSendInvite={async (recipientEmail) => {
             const synced = await syncCloudData()
 
             if (!synced) {
@@ -536,11 +538,39 @@ export function BookNestCalendarDetail({
               )
             }
 
-            return createCalendarInviteUrl({
+            const idToken = readGoogleIdToken()
+            if (!idToken) {
+              throw new Error('Sign in with Google before sending calendar invites.')
+            }
+
+            const result = await createCloudCalendarInvite({
+              data: {
+                idToken,
+                calendarId: calendar.id,
+                recipientEmail,
+                senderName: senderDisplayName,
+              },
+            })
+
+            if (!result.ok) {
+              if (result.reason === 'self-invite') {
+                throw new Error('Use a different email. You already own this calendar.')
+              }
+
+              if (result.reason === 'calendar-not-found') {
+                throw new Error('This calendar has not saved to cloud yet. Try again in a moment.')
+              }
+
+              throw new Error('Could not send the invite. Try again.')
+            }
+
+            const inviteLink = createCalendarInviteUrl({
               calendarId: calendar.id,
               calendarName: calendar.name,
               senderName: senderDisplayName,
             })
+
+            return inviteLink
           }}
         />
       ) : null}
@@ -562,11 +592,11 @@ export function BookNestCalendarDetail({
 function InviteModal({
   calendarName,
   onClose,
-  onCreateLink,
+  onSendInvite,
 }: {
   calendarName: string
   onClose: () => void
-  onCreateLink: () => Promise<string>
+  onSendInvite: (recipientEmail: string) => Promise<string>
 }) {
   const [recipient, setRecipient] = useState('')
   const [inviteLink, setInviteLink] = useState('')
@@ -585,14 +615,16 @@ function InviteModal({
 
   async function createLink() {
     setIsCreatingLink(true)
-    setCopyStatus('Saving calendar to cloud before creating the invite...')
+    setCopyStatus('Saving calendar to cloud and sending the invite...')
 
     try {
-      const link = await onCreateLink()
+      const link = await onSendInvite(recipient)
       setInviteLink(link)
-      await copyInviteLink(link)
+      setCopyStatus(
+        'Invite sent. It will appear in their New Invites when they sign in with that Google email.',
+      )
     } catch (error) {
-      setCopyStatus(error instanceof Error ? error.message : 'Could not create invite link.')
+      setCopyStatus(error instanceof Error ? error.message : 'Could not send invite.')
     } finally {
       setIsCreatingLink(false)
     }
@@ -610,11 +642,12 @@ function InviteModal({
         >
           <h2 className="modal-title">Invite to {calendarName}</h2>
           <label className="form-field">
-            <span>Email or username</span>
+            <span>Email</span>
             <input
+              type="email"
               value={recipient}
               onChange={(event) => setRecipient(event.target.value)}
-              placeholder="Email or username"
+              placeholder="friend@example.com"
             />
           </label>
 
@@ -630,7 +663,7 @@ function InviteModal({
                   className="pill-button"
                   onClick={() => void copyInviteLink(inviteLink)}
                 >
-                  Copy Link
+                  Copy Backup Link
                 </button>
                 {canEmailRecipient ? (
                   <a
@@ -643,7 +676,7 @@ function InviteModal({
                       `You have been invited to join "${calendarName}" on BookNest.\n\nOpen this link to accept the invite:\n${inviteLink}`,
                     )}`}
                   >
-                    Open Email
+                    Open Email Backup
                   </a>
                 ) : null}
               </div>
@@ -654,15 +687,15 @@ function InviteModal({
           <button
             type="submit"
             className="action-button action-button--primary"
-            disabled={!recipient.trim() || isCreatingLink}
+            disabled={!canEmailRecipient || isCreatingLink}
           >
             <PartyPopper size={16} />
             <span>
               {isCreatingLink
-                ? 'Creating Invite Link...'
+                ? 'Sending Invite...'
                 : inviteLink
-                  ? 'Create New Invite Link'
-                  : 'Create Invite Link'}
+                  ? 'Send Another Invite'
+                  : 'Send Invite'}
             </span>
           </button>
         </form>
