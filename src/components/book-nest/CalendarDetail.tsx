@@ -45,6 +45,9 @@ export function BookNestCalendarDetail({
   const {
     snapshot,
     addReaction,
+    cloudError,
+    cloudStatus,
+    refreshCloudData,
     removeReservation,
     sendMessage,
     syncCloudData,
@@ -131,6 +134,24 @@ export function BookNestCalendarDetail({
               </button>
             </div>
           </section>
+
+          {cloudStatus === 'error' && cloudError ? (
+            <section className="book-card cloud-status-card rise-in">
+              <div className="section-head">
+                <div>
+                  <h2 className="section-heading">Cloud Sync Needs Attention</h2>
+                  <p className="account-meta">{cloudError}</p>
+                </div>
+                <button
+                  type="button"
+                  className="pill-button"
+                  onClick={() => void refreshCloudData()}
+                >
+                  Retry Sync
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <section className="book-card rise-in" style={{ animationDelay: '60ms' }}>
             <div className="calendar-grid-header">

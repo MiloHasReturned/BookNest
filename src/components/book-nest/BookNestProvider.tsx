@@ -373,6 +373,12 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       const acceptedInvite = snapshot.invites.find((entry) => entry.id === inviteId)
       const idToken = readGoogleIdToken()
 
+      if (acceptedInvite?.calendarId && !idToken) {
+        setCloudStatus('error')
+        setCloudError('Sign in with Google before accepting shared calendar invites.')
+        return
+      }
+
       if (idToken && acceptedInvite?.calendarId) {
         void acceptCloudCalendarInvite({
           data: {
