@@ -10,7 +10,14 @@ import {
   UserPlus2,
   X,
 } from 'lucide-react'
-import { type CSSProperties, type ReactNode, useDeferredValue, useId, useState } from 'react'
+import {
+  type CSSProperties,
+  type ReactNode,
+  useDeferredValue,
+  useEffect,
+  useId,
+  useState,
+} from 'react'
 import { AnimatedBackdrop } from '#/components/book-nest/AnimatedBackdrop'
 import { GoogleSignInButton } from '#/components/book-nest/GoogleSignInButton'
 import { useBookNest } from '#/components/book-nest/BookNestProvider'
@@ -24,6 +31,7 @@ import {
   formatRange,
   getCalendarTint,
 } from '#/lib/booknest'
+import { parseCalendarInviteParam } from '#/lib/inviteLinks'
 
 export function BookNestDashboard() {
   const {
@@ -33,6 +41,7 @@ export function BookNestDashboard() {
     clearAccountProfile,
     clearInvites,
     createCalendar,
+    createInvite,
     deleteCalendar,
     leaveCalendar,
     rejectInvite,
@@ -54,6 +63,48 @@ export function BookNestDashboard() {
   const invitedCalendars = snapshot.invitedCalendars.filter((calendar) =>
     !searchValue ? true : calendar.name.toLowerCase().includes(searchValue),
   )
+
+  useEffect(() => {
+    const inviteParam = new URLSearchParams(window.location.search).get('invite')
+    if (!inviteParam) {
+      return
+    }
+
+    const invite = parseCalendarInviteParam(inviteParam)
+    const cleanUrl = `${window.location.pathname}${window.location.hash}`
+    window.history.replaceState({}, '', cleanUrl)
+
+    if (!invite) {
+      return
+    }
+
+    const alreadyOwnsCalendar = snapshot.calendars.some(
+      (calendar) => calendar.id === invite.calendarId,
+    )
+    const alreadyInvited = snapshot.invites.some(
+      (entry) => entry.calendarId === invite.calendarId,
+    )
+    const alreadyAccepted = snapshot.invitedCalendars.some(
+      (calendar) => calendar.id === invite.calendarId,
+    )
+
+    if (alreadyOwnsCalendar || alreadyInvited || alreadyAccepted) {
+      return
+    }
+
+    createInvite(
+      invite.calendarId,
+      invite.calendarName,
+      snapshot.accountProfile?.email || 'Invite link',
+      invite.senderName,
+    )
+  }, [
+    createInvite,
+    snapshot.accountProfile?.email,
+    snapshot.calendars,
+    snapshot.invitedCalendars,
+    snapshot.invites,
+  ])
 
   return (
     <>

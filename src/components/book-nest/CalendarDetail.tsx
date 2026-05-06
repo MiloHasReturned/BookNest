@@ -33,6 +33,7 @@ import {
   resolvedEndDate,
   weekdaySymbols,
 } from '#/lib/booknest'
+import { createCalendarInviteUrl } from '#/lib/inviteLinks'
 
 const REACTIONS = ['👍', '🔥', '✅', '🎉', '❤️', '👀']
 
@@ -44,7 +45,6 @@ export function BookNestCalendarDetail({
   const {
     snapshot,
     addReaction,
-    createInvite,
     removeReservation,
     sendMessage,
     updateDayNote,
@@ -497,10 +497,13 @@ export function BookNestCalendarDetail({
         <InviteModal
           calendarName={calendar.name}
           onClose={() => setShowInviteModal(false)}
-          onSend={(recipient) => {
-            createInvite(calendar.id, calendar.name, recipient, senderDisplayName)
-            setShowInviteModal(false)
-          }}
+          onCreateLink={() =>
+            createCalendarInviteUrl({
+              calendarId: calendar.id,
+              calendarName: calendar.name,
+              senderName: senderDisplayName,
+            })
+          }
         />
       ) : null}
 
@@ -521,13 +524,31 @@ export function BookNestCalendarDetail({
 function InviteModal({
   calendarName,
   onClose,
-  onSend,
+  onCreateLink,
 }: {
   calendarName: string
   onClose: () => void
-  onSend: (recipient: string) => void
+  onCreateLink: () => string
 }) {
   const [recipient, setRecipient] = useState('')
+  const [inviteLink, setInviteLink] = useState('')
+  const [copyStatus, setCopyStatus] = useState('')
+  const canEmailRecipient = /\S+@\S+\.\S+/.test(recipient.trim())
+
+  async function copyInviteLink(link: string) {
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopyStatus('Invite link copied.')
+    } catch {
+      setCopyStatus('Copy failed. Select and copy the link manually.')
+    }
+  }
+
+  function createLink() {
+    const link = onCreateLink()
+    setInviteLink(link)
+    void copyInviteLink(link)
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -536,7 +557,7 @@ function InviteModal({
           className="modal-form"
           onSubmit={(event) => {
             event.preventDefault()
-            onSend(recipient)
+            createLink()
           }}
         >
           <h2 className="modal-title">Invite to {calendarName}</h2>
@@ -548,13 +569,47 @@ function InviteModal({
               placeholder="Email or username"
             />
           </label>
+
+          {inviteLink ? (
+            <div className="invite-link-panel">
+              <label className="form-field">
+                <span>Invite link</span>
+                <input value={inviteLink} readOnly onFocus={(event) => event.target.select()} />
+              </label>
+              <div className="invite-actions">
+                <button
+                  type="button"
+                  className="pill-button"
+                  onClick={() => void copyInviteLink(inviteLink)}
+                >
+                  Copy Link
+                </button>
+                {canEmailRecipient ? (
+                  <a
+                    className="pill-button"
+                    href={`mailto:${encodeURIComponent(
+                      recipient.trim(),
+                    )}?subject=${encodeURIComponent(
+                      `BookNest invite: ${calendarName}`,
+                    )}&body=${encodeURIComponent(
+                      `You have been invited to join "${calendarName}" on BookNest.\n\nOpen this link to accept the invite:\n${inviteLink}`,
+                    )}`}
+                  >
+                    Open Email
+                  </a>
+                ) : null}
+              </div>
+              {copyStatus ? <p className="invite-status">{copyStatus}</p> : null}
+            </div>
+          ) : null}
+
           <button
             type="submit"
             className="action-button action-button--primary"
             disabled={!recipient.trim()}
           >
             <PartyPopper size={16} />
-            <span>Send Invite</span>
+            <span>{inviteLink ? 'Create New Invite Link' : 'Create Invite Link'}</span>
           </button>
         </form>
       </div>
