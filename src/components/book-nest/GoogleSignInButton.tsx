@@ -4,6 +4,7 @@ import {
   loadGoogleIdentityScript,
   profileFromGoogleCredential,
 } from '#/lib/googleIdentity'
+import { saveGoogleSession } from '#/lib/googleSession'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
@@ -23,6 +24,8 @@ export function GoogleSignInButton({
       return
     }
 
+    const clientId = googleClientId
+
     async function mountGoogleButton() {
       try {
         await loadGoogleIdentityScript()
@@ -33,7 +36,7 @@ export function GoogleSignInButton({
 
         buttonRef.current.innerHTML = ''
         window.google.accounts.id.initialize({
-          client_id: googleClientId,
+          client_id: clientId,
           cancel_on_tap_outside: true,
           callback(response) {
             if (!response.credential) {
@@ -42,7 +45,9 @@ export function GoogleSignInButton({
             }
 
             try {
-              onSignIn(profileFromGoogleCredential(response.credential))
+              const profile = profileFromGoogleCredential(response.credential)
+              saveGoogleSession(response.credential, profile)
+              onSignIn(profile)
               setError(null)
             } catch {
               setError('Google sign-in returned an unreadable account.')

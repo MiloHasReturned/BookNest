@@ -10,9 +10,10 @@ const API_URL =
   process.env.EMAIL_VERIFY_API_URL ?? 'https://api.validemail.io/v1/verify'
 const API_KEY = process.env.EMAIL_VERIFY_API_KEY
 
-export const verifyEmail = createServerFn({ method: 'POST' }).handler(
-  async (ctx) => {
-    const email = (ctx as { data?: { email?: string } }).data?.email?.trim()
+export const verifyEmail = createServerFn({ method: 'POST' })
+  .inputValidator((input: { email?: string }) => input)
+  .handler(async ({ data }) => {
+    const email = data.email?.trim()
     if (!email) {
       throw new Error('Email is required')
     }
@@ -62,8 +63,7 @@ export const verifyEmail = createServerFn({ method: 'POST' }).handler(
     const result: EmailVerificationResult = { deliverable, disposable, reason }
 
     return result
-  },
-)
+  })
 
 // Client-friendly helper to avoid remembering the { email } shape
 export async function verifyEmailClient(email: string) {

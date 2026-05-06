@@ -512,7 +512,7 @@ export function saveSnapshot(snapshot: BookNestSnapshot) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
 }
 
-function normalizeSnapshot(snapshot: Partial<BookNestSnapshot>): BookNestSnapshot {
+export function normalizeSnapshot(snapshot: Partial<BookNestSnapshot>): BookNestSnapshot {
   const demo = buildDemoSnapshot()
 
   return {

@@ -49,12 +49,29 @@ Google sign-in is wired through Google Identity Services and saves the signed-in
    - `VITE_GOOGLE_CLIENT_ID=<your-google-client-id>.apps.googleusercontent.com`
 3. Redeploy after saving the variable.
 
+## Backend storage
+
+Book Nest can sync signed-in Google users to Supabase through TanStack server functions. The service-role key is only used on the server.
+
+1. Create a Supabase project.
+2. In Supabase, open SQL Editor and run `supabase/schema.sql`.
+3. Add these Vercel environment variables:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `GOOGLE_CLIENT_ID` (same value as `VITE_GOOGLE_CLIENT_ID`)
+4. Redeploy after saving the variables.
+
+Without these variables, the app continues using browser local storage.
+
 ## Deploying to Vercel (SSR)
 
 1. Env vars in Vercel project settings:
    - `EMAIL_VERIFY_API_KEY`
    - `EMAIL_VERIFY_API_URL` (e.g., `https://api.sniffmail.io/verify`)
    - `VITE_GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_ID`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
 2. Build settings:
    - Install: `bun install`
    - Build: `bun run build`
@@ -74,5 +91,5 @@ Google sign-in is wired through Google Identity Services and saves the signed-in
 ## Next product work
 
 - Replace placeholder dashboard data with route loaders and server functions
-- Add shared backend storage
+- Add conflict handling and realtime updates for shared calendars
 - Port reservations, invites, chat, and day notes from the old SwiftUI prototype

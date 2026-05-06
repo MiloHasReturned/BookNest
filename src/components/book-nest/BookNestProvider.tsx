@@ -4,6 +4,7 @@ import {
   startTransition,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import {
@@ -24,6 +25,12 @@ import {
   sortCalendarsByName,
   THEME_PRESETS,
 } from '#/lib/booknest'
+import {
+  acceptCloudCalendarInvite,
+  loadCloudSnapshot,
+  saveCloudSnapshot,
+} from '#/lib/booknestCloud'
+import { clearGoogleSession, readGoogleIdToken } from '#/lib/googleSession'
 
 type BookNestContextValue = {
   snapshot: BookNestSnapshot
@@ -75,15 +82,80 @@ const BookNestContext = createContext<BookNestContextValue | null>(null)
 
 export function BookNestProvider({ children }: { children: ReactNode }) {
   const [snapshot, setSnapshot] = useState<BookNestSnapshot>(() => readSnapshot())
+  const [cloudReady, setCloudReady] = useState(false)
+  const cloudSaveErrorLogged = useRef(false)
 
   useEffect(() => {
-    setSnapshot(readSnapshot())
+    const localSnapshot = readSnapshot()
+    const idToken = readGoogleIdToken()
+
+    if (!idToken) {
+      setSnapshot(localSnapshot)
+      setCloudReady(true)
+      return
+    }
+
+    let isCancelled = false
+
+    async function loadCloudData() {
+      try {
+        const result = await loadCloudSnapshot({
+          data: {
+            idToken,
+            localSnapshot,
+          },
+        })
+
+        if (!isCancelled && result.ok && result.snapshot) {
+          setSnapshot(result.snapshot)
+        }
+      } catch (error) {
+        console.error('[BookNest] Cloud load failed', error)
+      } finally {
+        if (!isCancelled) {
+          setCloudReady(true)
+        }
+      }
+    }
+
+    void loadCloudData()
+
+    return () => {
+      isCancelled = true
+    }
   }, [])
 
   useEffect(() => {
     applyThemeToDocument(snapshot.theme)
     saveSnapshot(snapshot)
-  }, [snapshot])
+
+    if (!cloudReady) {
+      return
+    }
+
+    const idToken = readGoogleIdToken()
+    if (!idToken || !snapshot.accountProfile) {
+      return
+    }
+
+    const saveTimer = window.setTimeout(() => {
+      void saveCloudSnapshot({
+        data: {
+          idToken,
+          snapshot,
+        },
+      }).catch((error) => {
+        if (!cloudSaveErrorLogged.current) {
+          cloudSaveErrorLogged.current = true
+          console.error('[BookNest] Cloud save failed', error)
+        }
+      })
+    }, 650)
+
+    return () => {
+      window.clearTimeout(saveTimer)
+    }
+  }, [cloudReady, snapshot])
 
   const value: BookNestContextValue = {
     snapshot,
@@ -117,6 +189,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     },
     clearAccountProfile() {
       window.google?.accounts?.id?.disableAutoSelect()
+      clearGoogleSession()
       setSnapshot((current) => ({
         ...current,
         accountProfile: null,
@@ -168,6 +241,8 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       })
     },
     acceptInvite(inviteId) {
+      const acceptedInvite = snapshot.invites.find((entry) => entry.id === inviteId)
+
       setSnapshot((current) => {
         const invite = current.invites.find((entry) => entry.id === inviteId)
         if (!invite) {
@@ -195,6 +270,32 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           invites: current.invites.filter((entry) => entry.id !== inviteId),
         }
       })
+
+      const idToken = readGoogleIdToken()
+      if (idToken && acceptedInvite?.calendarId) {
+        void acceptCloudCalendarInvite({
+          data: {
+            idToken,
+            calendarId: acceptedInvite.calendarId,
+          },
+        })
+          .then(() =>
+            loadCloudSnapshot({
+              data: {
+                idToken,
+                localSnapshot: readSnapshot(),
+              },
+            }),
+          )
+          .then((result) => {
+            if (result.ok && result.snapshot) {
+              setSnapshot(result.snapshot)
+            }
+          })
+          .catch((error) => {
+            console.error('[BookNest] Cloud invite accept failed', error)
+          })
+      }
     },
     rejectInvite(inviteId) {
       setSnapshot((current) => ({
