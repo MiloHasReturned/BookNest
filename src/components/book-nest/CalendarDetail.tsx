@@ -45,6 +45,7 @@ export function BookNestCalendarDetail({
   const {
     snapshot,
     addReaction,
+    clearBrokenCloudCalendars,
     cloudError,
     cloudStatus,
     refreshCloudData,
@@ -148,6 +149,13 @@ export function BookNestCalendarDetail({
                   onClick={() => void refreshCloudData()}
                 >
                   Retry Sync
+                </button>
+                <button
+                  type="button"
+                  className="pill-button"
+                  onClick={() => void clearBrokenCloudCalendars()}
+                >
+                  Clean Up Broken Local Invites
                 </button>
               </div>
             </section>

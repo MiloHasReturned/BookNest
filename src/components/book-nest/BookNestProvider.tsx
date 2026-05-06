@@ -27,6 +27,7 @@ import {
 } from '#/lib/booknest'
 import {
   acceptCloudCalendarInvite,
+  clearCloudErrorCalendars,
   loadCloudSnapshot,
   saveCloudSnapshot,
 } from '#/lib/booknestCloud'
@@ -38,6 +39,7 @@ type BookNestContextValue = {
   cloudError: string | null
   refreshCloudData: () => Promise<void>
   syncCloudData: () => Promise<boolean>
+  clearBrokenCloudCalendars: () => Promise<void>
   createCalendar: (name: string, tintIndex: number) => void
   saveAccountProfile: (profile: AccountProfile) => void
   clearAccountProfile: () => void
@@ -160,6 +162,34 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       setCloudError(error instanceof Error ? error.message : 'Cloud sync failed.')
       console.error('[BookNest] Cloud save failed', error)
       return false
+    }
+  }
+
+  async function clearBrokenCloudCalendars() {
+    const idToken = readGoogleIdToken()
+    if (!idToken) {
+      return
+    }
+
+    setCloudStatus('syncing')
+
+    try {
+      const result = await clearCloudErrorCalendars({
+        data: {
+          idToken,
+          localSnapshot: snapshotRef.current,
+        },
+      })
+
+      if (result.ok && result.snapshot) {
+        setSnapshot(result.snapshot)
+        saveSnapshot(result.snapshot)
+        setCloudStatus('synced')
+        setCloudError(null)
+      }
+    } catch (error) {
+      setCloudStatus('error')
+      setCloudError(error instanceof Error ? error.message : 'Cloud cleanup failed.')
     }
   }
 
@@ -288,6 +318,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     cloudError,
     refreshCloudData,
     syncCloudData,
+    clearBrokenCloudCalendars,
     createCalendar(name, tintIndex) {
       const trimmedName = name.trim()
       if (!trimmedName) {

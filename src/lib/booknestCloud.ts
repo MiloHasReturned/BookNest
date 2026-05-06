@@ -167,6 +167,53 @@ export const loadCloudSnapshot = createServerFn({ method: 'POST' })
     }
   })
 
+export const clearCloudErrorCalendars = createServerFn({ method: 'POST' })
+  .inputValidator((input: LoadCloudSnapshotInput) => input)
+  .handler(async ({ data }) => {
+    const { idToken, localSnapshot } = data
+
+    if (!idToken || !localSnapshot) {
+      return {
+        ok: false,
+        reason: 'missing-data',
+        snapshot: localSnapshot ?? null,
+      }
+    }
+
+    const user = await verifyGoogleIdToken(idToken)
+    const visibleCalendars = [
+      ...localSnapshot.calendars,
+      ...localSnapshot.invitedCalendars,
+    ]
+    const existingCalendars = visibleCalendars.length
+      ? await getCalendarsByIds(visibleCalendars.map((calendar) => calendar.id))
+      : []
+    const existingCalendarIds = new Set(
+      existingCalendars.map((calendar) => calendar.id),
+    )
+    const cleanedSnapshot = normalizeSnapshot({
+      ...localSnapshot,
+      calendars: localSnapshot.calendars,
+      invitedCalendars: localSnapshot.invitedCalendars.filter((calendar) =>
+        existingCalendarIds.has(calendar.id),
+      ),
+      invites: localSnapshot.invites.filter(
+        (invite) => !invite.calendarId || existingCalendarIds.has(invite.calendarId),
+      ),
+    })
+
+    await upsertProfile(
+      user,
+      cleanedSnapshot.accountProfile ?? profileToAccountProfile(null, user),
+      cleanedSnapshot.theme,
+    )
+
+    return {
+      ok: true,
+      snapshot: cleanedSnapshot,
+    }
+  })
+
 export const saveCloudSnapshot = createServerFn({ method: 'POST' })
   .inputValidator((input: SaveCloudSnapshotInput) => input)
   .handler(async ({ data }) => {
@@ -424,17 +471,26 @@ async function upsertOwnedCalendars(email: string, snapshot: BookNestSnapshot) {
 }
 
 async function upsertAcceptedMemberships(email: string, snapshot: BookNestSnapshot) {
+  const invitedCalendarIds = snapshot.invitedCalendars.map((calendar) => calendar.id)
+  const existingInvitedCalendars = invitedCalendarIds.length
+    ? await getCalendarsByIds(invitedCalendarIds)
+    : []
+  const existingInvitedCalendarIds = new Set(
+    existingInvitedCalendars.map((calendar) => calendar.id),
+  )
   const memberships = [
     ...snapshot.calendars.map((calendar) => ({
       calendar_id: calendar.id,
       user_email: email,
       role: 'owner',
     })),
-    ...snapshot.invitedCalendars.map((calendar) => ({
-      calendar_id: calendar.id,
-      user_email: email,
-      role: 'member',
-    })),
+    ...snapshot.invitedCalendars
+      .filter((calendar) => existingInvitedCalendarIds.has(calendar.id))
+      .map((calendar) => ({
+        calendar_id: calendar.id,
+        user_email: email,
+        role: 'member',
+      })),
   ]
 
   if (!memberships.length) {
@@ -459,6 +515,12 @@ async function upsertVisibleCalendarStates(email: string, snapshot: BookNestSnap
     return
   }
 
+  const existingVisibleCalendars = await getCalendarsByIds(
+    visibleCalendars.map((calendar) => calendar.id),
+  )
+  const existingVisibleCalendarIds = new Set(
+    existingVisibleCalendars.map((calendar) => calendar.id),
+  )
   const memberships = await getMemberships(email)
   const accessibleCalendarIds = new Set([
     ...snapshot.calendars.map((calendar) => calendar.id),
@@ -473,6 +535,7 @@ async function upsertVisibleCalendarStates(email: string, snapshot: BookNestSnap
   )
 
   const rows = visibleCalendars
+    .filter((calendar) => existingVisibleCalendarIds.has(calendar.id))
     .filter((calendar) => accessibleCalendarIds.has(calendar.id))
     .filter((calendar) => {
       if (ownedCalendarIds.has(calendar.id)) {

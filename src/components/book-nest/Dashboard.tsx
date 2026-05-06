@@ -40,6 +40,7 @@ export function BookNestDashboard() {
     applyPreset,
     clearAccountProfile,
     clearInvites,
+    clearBrokenCloudCalendars,
     cloudError,
     cloudStatus,
     createCalendar,
@@ -134,9 +135,16 @@ export function BookNestDashboard() {
 
           {cloudStatus === 'error' && cloudError ? (
             <section className="book-card cloud-status-card rise-in">
-              <div>
+              <div className="section-stack">
                 <h2 className="section-heading">Cloud Sync Needs Attention</h2>
                 <p className="account-meta">{cloudError}</p>
+                <button
+                  type="button"
+                  className="pill-button"
+                  onClick={() => void clearBrokenCloudCalendars()}
+                >
+                  Clean Up Broken Local Invites
+                </button>
               </div>
             </section>
           ) : null}
