@@ -1484,6 +1484,216 @@ textarea {
   mask-image: linear-gradient(180deg, transparent, black 16%, black 86%, transparent);
 }
 
+.animated-backdrop[data-style="mandelbloom"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 31% 42%, transparent 0 8%, rgba(255, 255, 255, 0.18) 8.3% 9.2%, transparent 9.6% 17%, rgba(112, 235, 245, 0.22) 17.4% 18.2%, transparent 18.8%),
+    radial-gradient(circle at 65% 51%, transparent 0 6%, rgba(248, 188, 214, 0.24) 6.4% 7.4%, transparent 7.8% 14%, rgba(186, 242, 213, 0.18) 14.4% 15.6%, transparent 16%),
+    conic-gradient(from 135deg at 52% 48%, #07152e, #15335c, #4e2d70, #0d443e, #07152e);
+  animation: fractalZoom 26s ease-in-out infinite alternate;
+}
+
+.animated-backdrop[data-style="mandelbloom"] .animated-backdrop__texture {
+  opacity: 0.34;
+  background-image:
+    repeating-radial-gradient(circle at 36% 46%, transparent 0 14px, rgba(255, 255, 255, 0.18) 15px 16px),
+    repeating-radial-gradient(circle at 62% 48%, transparent 0 22px, rgba(112, 235, 245, 0.14) 23px 25px);
+  background-size: 100% 100%;
+  mix-blend-mode: screen;
+}
+
+.animated-backdrop[data-style="mandelbloom"] .animated-backdrop__layer {
+  border-radius: 38% 62% 46% 54% / 58% 34% 66% 42%;
+  filter: blur(20px) saturate(1.45);
+}
+
+.animated-backdrop[data-style="crystalFractal"] .animated-backdrop__base {
+  background:
+    conic-gradient(from 25deg at 32% 38%, rgba(255, 255, 255, 0.2), transparent 18%, rgba(179, 237, 247, 0.28) 27%, transparent 42%, rgba(248, 188, 214, 0.24) 56%, transparent 72%),
+    linear-gradient(135deg, #e8f9ff, #cad7ff 46%, #f6d8ff);
+}
+
+.animated-backdrop[data-style="crystalFractal"] .animated-backdrop__layer {
+  border-radius: 0;
+  clip-path: polygon(50% 0, 78% 21%, 100% 50%, 75% 84%, 50% 100%, 19% 78%, 0 50%, 24% 18%);
+  filter: blur(8px) saturate(1.35);
+  opacity: 0.34;
+}
+
+.animated-backdrop[data-style="crystalFractal"] .animated-backdrop__grid {
+  opacity: 0.28;
+  background-image:
+    linear-gradient(60deg, rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.28) 1px, transparent 1px);
+  background-size: 56px 56px;
+  animation: blueprintPan 20s linear infinite;
+}
+
+.animated-backdrop[data-style="fernSignal"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 26% 74%, rgba(186, 242, 213, 0.56), transparent 36%),
+    radial-gradient(circle at 78% 20%, rgba(112, 235, 245, 0.28), transparent 28%),
+    linear-gradient(135deg, #062820, #123f38 54%, #dce9d3);
+}
+
+.animated-backdrop[data-style="fernSignal"] .animated-backdrop__ribbon {
+  opacity: 0.5;
+  height: 46vh;
+  background:
+    repeating-radial-gradient(ellipse at 20% 50%, rgba(186, 242, 213, 0.46) 0 6px, transparent 7px 18px),
+    linear-gradient(90deg, transparent, rgba(186, 242, 213, 0.52), transparent);
+  clip-path: polygon(0 68%, 14% 42%, 29% 62%, 43% 30%, 58% 56%, 72% 28%, 86% 54%, 100% 34%, 100% 74%, 0 92%);
+}
+
+.animated-backdrop[data-style="fernSignal"] .animated-backdrop__texture {
+  opacity: 0.22;
+  background-image:
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.32) 0 1px, transparent 2px);
+  background-size: 18px 42px;
+  animation: backdropSparkle 16s linear infinite;
+}
+
+.animated-backdrop[data-style="hologramMesh"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(112, 235, 245, 0.34), transparent 30%),
+    radial-gradient(circle at 84% 72%, rgba(248, 188, 214, 0.3), transparent 34%),
+    linear-gradient(145deg, #071522, #091a34 48%, #160b31);
+}
+
+.animated-backdrop[data-style="hologramMesh"] .animated-backdrop__grid {
+  opacity: 0.48;
+  background-image:
+    linear-gradient(60deg, rgba(112, 235, 245, 0.34) 1px, transparent 1px),
+    linear-gradient(120deg, rgba(248, 188, 214, 0.26) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 44px 44px, 44px 44px, 22px 22px;
+  animation: blueprintPan 12s linear infinite;
+}
+
+.animated-backdrop[data-style="hologramMesh"] .animated-backdrop__veil {
+  opacity: 0.42;
+  background: linear-gradient(90deg, transparent, rgba(112, 235, 245, 0.18), transparent);
+  animation: scanlineSweep 4s ease-in-out infinite;
+}
+
+.animated-backdrop[data-style="quantumGrid"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(112, 235, 245, 0.24), transparent 22%),
+    radial-gradient(circle at 80% 22%, rgba(255, 255, 255, 0.14), transparent 18%),
+    linear-gradient(135deg, #020916, #0a102a 58%, #061d27);
+}
+
+.animated-backdrop[data-style="quantumGrid"] .animated-backdrop__orb {
+  opacity: 0.7;
+  border-color: rgba(112, 235, 245, 0.55);
+  box-shadow:
+    inset 0 0 28px rgba(112, 235, 245, 0.18),
+    0 0 44px rgba(112, 235, 245, 0.18);
+}
+
+.animated-backdrop[data-style="quantumGrid"] .animated-backdrop__grid {
+  opacity: 0.38;
+  background-image:
+    linear-gradient(rgba(112, 235, 245, 0.24) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(112, 235, 245, 0.22) 1px, transparent 1px);
+  background-size: 58px 58px;
+  mask-image: radial-gradient(circle at 50% 50%, black, transparent 70%);
+}
+
+.animated-backdrop[data-style="quantumGrid"] .animated-backdrop__sparkles {
+  opacity: 0.62;
+}
+
+.animated-backdrop[data-style="orbitalBlueprint"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.12), transparent 20%),
+    linear-gradient(135deg, #102744, #163b5b 55%, #0b1724);
+}
+
+.animated-backdrop[data-style="orbitalBlueprint"] .animated-backdrop__orb {
+  opacity: 0.62;
+  border-width: 2px;
+  border-color: rgba(206, 236, 255, 0.42);
+  transform: scaleX(1.35) rotate(-18deg);
+}
+
+.animated-backdrop[data-style="orbitalBlueprint"] .animated-backdrop__grid {
+  opacity: 0.3;
+  background-image:
+    repeating-radial-gradient(circle at 50% 50%, transparent 0 42px, rgba(206, 236, 255, 0.24) 43px 44px),
+    linear-gradient(rgba(206, 236, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(206, 236, 255, 0.14) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+}
+
+.animated-backdrop[data-style="editorialPaper"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.72), transparent 26%),
+    radial-gradient(circle at 82% 12%, rgba(186, 242, 213, 0.28), transparent 28%),
+    linear-gradient(135deg, #fbf5e8, #eef7f6 52%, #f3eef8);
+}
+
+.animated-backdrop[data-style="editorialPaper"] .animated-backdrop__texture {
+  opacity: 0.3;
+  background-image:
+    linear-gradient(rgba(23, 30, 42, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(23, 30, 42, 0.08) 0 0.8px, transparent 1.4px);
+  background-size: 100% 34px, 16px 16px;
+  mix-blend-mode: multiply;
+}
+
+.animated-backdrop[data-style="editorialPaper"] .animated-backdrop__layer {
+  opacity: 0.24;
+  filter: blur(52px);
+}
+
+.animated-backdrop[data-style="executiveMist"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.44), transparent 28%),
+    radial-gradient(circle at 80% 70%, rgba(179, 237, 247, 0.28), transparent 34%),
+    linear-gradient(140deg, #f7f9fb, #dfe9f0 48%, #c7d7e2);
+}
+
+.animated-backdrop[data-style="executiveMist"] .animated-backdrop__veil {
+  opacity: 0.5;
+  background:
+    linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.42), transparent),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 44%);
+}
+
+.animated-backdrop[data-style="executiveMist"] .animated-backdrop__grid {
+  opacity: 0.08;
+}
+
+.animated-backdrop[data-style="executiveMist"] .animated-backdrop__layer {
+  opacity: 0.22;
+  filter: blur(64px);
+}
+
+.animated-backdrop[data-style="graphiteHalo"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.18), transparent 22%),
+    radial-gradient(circle at 24% 78%, rgba(112, 235, 245, 0.14), transparent 28%),
+    linear-gradient(135deg, #111823, #1c2430 50%, #0d1018);
+}
+
+.animated-backdrop[data-style="graphiteHalo"] .animated-backdrop__orb {
+  opacity: 0.36;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.animated-backdrop[data-style="graphiteHalo"] .animated-backdrop__grid {
+  opacity: 0.12;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.animated-backdrop[data-style="graphiteHalo"] .animated-backdrop__ribbon {
+  opacity: 0.18;
+  filter: blur(26px);
+}
+
 @keyframes backdropFloat {
   from {
     transform: translate3d(0, 0, 0) scale(0.94) rotate(-4deg);
@@ -1552,6 +1762,38 @@ textarea {
   }
   to {
     background-position: 0 0, 0 36px;
+  }
+}
+
+@keyframes fractalZoom {
+  from {
+    background-position: 0 0, 0 0, center;
+    filter: hue-rotate(0deg) saturate(1.08);
+    transform: scale(1);
+  }
+  to {
+    background-position: 28px -18px, -22px 18px, center;
+    filter: hue-rotate(18deg) saturate(1.28);
+    transform: scale(1.08);
+  }
+}
+
+@keyframes blueprintPan {
+  from {
+    background-position: 0 0, 0 0, 0 0;
+  }
+  to {
+    background-position: 56px 0, -56px 0, 22px 22px;
+  }
+}
+
+@keyframes scanlineSweep {
+  0%,
+  100% {
+    transform: translateX(-70%) skewX(-14deg);
+  }
+  50% {
+    transform: translateX(70%) skewX(-14deg);
   }
 }
 

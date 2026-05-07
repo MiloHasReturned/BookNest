@@ -16,6 +16,15 @@ export type BackgroundAnimationStyle =
   | 'geoDrift'
   | 'kaleidoscope'
   | 'monsoonMatrix'
+  | 'mandelbloom'
+  | 'crystalFractal'
+  | 'fernSignal'
+  | 'hologramMesh'
+  | 'quantumGrid'
+  | 'orbitalBlueprint'
+  | 'editorialPaper'
+  | 'executiveMist'
+  | 'graphiteHalo'
 
 export type AppTheme = {
   backgroundTop: ThemeColor
@@ -136,6 +145,15 @@ export const BACKGROUND_ANIMATION_STYLES: Array<{
   { id: 'geoDrift', label: 'Geo Drift' },
   { id: 'kaleidoscope', label: 'Kaleidoscope Glass' },
   { id: 'monsoonMatrix', label: 'Monsoon Code' },
+  { id: 'mandelbloom', label: 'Mandelbloom' },
+  { id: 'crystalFractal', label: 'Crystal Fractal' },
+  { id: 'fernSignal', label: 'Fern Signal' },
+  { id: 'hologramMesh', label: 'Hologram Mesh' },
+  { id: 'quantumGrid', label: 'Quantum Grid' },
+  { id: 'orbitalBlueprint', label: 'Orbital Blueprint' },
+  { id: 'editorialPaper', label: 'Editorial Paper' },
+  { id: 'executiveMist', label: 'Executive Mist' },
+  { id: 'graphiteHalo', label: 'Graphite Halo' },
 ]
 
 export const DEFAULT_THEME: AppTheme = {
