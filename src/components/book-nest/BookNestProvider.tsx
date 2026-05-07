@@ -18,6 +18,7 @@ import {
   type UserCalendar,
   applyThemeToDocument,
   clampTintIndex,
+  createEmptySnapshot,
   createId,
   makeReplyReference,
   readSnapshot,
@@ -350,10 +351,10 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     clearAccountProfile() {
       window.google?.accounts?.id?.disableAutoSelect()
       clearGoogleSession()
-      setSnapshot((current) => ({
-        ...current,
-        accountProfile: null,
-      }))
+      setCloudReady(true)
+      setCloudStatus('local')
+      setCloudError(null)
+      setSnapshot((current) => createEmptySnapshot(current.theme))
     },
     deleteCalendar(calendarId) {
       setSnapshot((current) => {

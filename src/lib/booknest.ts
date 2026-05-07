@@ -473,7 +473,7 @@ export function applyThemeToDocument(theme: AppTheme) {
   root.dataset.animationStyle = theme.animationStyle
 }
 
-function buildDemoSnapshot(): BookNestSnapshot {
+export function createEmptySnapshot(theme: AppTheme = DEFAULT_THEME): BookNestSnapshot {
   return {
     accountProfile: null,
     calendars: [],
@@ -482,25 +482,25 @@ function buildDemoSnapshot(): BookNestSnapshot {
     reservationsByCalendar: {},
     dayNotesByCalendar: {},
     chatByCalendar: {},
-    theme: DEFAULT_THEME,
+    theme,
   }
 }
 
 export function readSnapshot() {
   if (typeof window === 'undefined') {
-    return buildDemoSnapshot()
+    return createEmptySnapshot()
   }
 
   const stored = window.localStorage.getItem(STORAGE_KEY)
   if (!stored) {
-    return buildDemoSnapshot()
+    return createEmptySnapshot()
   }
 
   try {
     const parsed = JSON.parse(stored) as Partial<BookNestSnapshot>
     return normalizeSnapshot(parsed)
   } catch {
-    return buildDemoSnapshot()
+    return createEmptySnapshot()
   }
 }
 
@@ -513,7 +513,7 @@ export function saveSnapshot(snapshot: BookNestSnapshot) {
 }
 
 export function normalizeSnapshot(snapshot: Partial<BookNestSnapshot>): BookNestSnapshot {
-  const demo = buildDemoSnapshot()
+  const demo = createEmptySnapshot()
 
   return {
     accountProfile: snapshot.accountProfile ?? demo.accountProfile,
