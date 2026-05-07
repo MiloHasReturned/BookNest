@@ -578,8 +578,19 @@ function CustomizationModal({
               }`}
               onClick={() => onSetAnimationStyle(style.id)}
             >
-              <span>{style.label}</span>
-              {theme.animationStyle === style.id ? <span>Selected</span> : null}
+              <span className="animation-row__preview">
+                <AnimatedBackdrop
+                  compact
+                  theme={{
+                    ...theme,
+                    animationStyle: style.id,
+                  }}
+                />
+              </span>
+              <span className="animation-row__label">{style.label}</span>
+              {theme.animationStyle === style.id ? (
+                <span className="animation-row__status">Selected</span>
+              ) : null}
             </button>
           ))}
         </div>

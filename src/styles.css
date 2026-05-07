@@ -771,7 +771,7 @@ textarea {
 
 .animation-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
   align-items: center;
   border: 1px solid var(--line-soft);
@@ -779,6 +779,31 @@ textarea {
   background: color-mix(in oklab, var(--theme-box) 88%, white 12%);
   color: var(--theme-text);
   padding: 0.85rem 0.95rem;
+  overflow: hidden;
+}
+
+.animation-row__preview {
+  position: relative;
+  flex: 0 0 74px;
+  width: 74px;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--theme-border-mid) 42%, transparent);
+  border-radius: 16px;
+  background: var(--theme-bg-bottom);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, white 18%, transparent);
+}
+
+.animation-row__label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.animation-row__status {
+  color: var(--theme-accent);
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .color-grid {
@@ -1084,31 +1109,50 @@ textarea {
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  background: linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
+  isolation: isolate;
 }
 
 .animated-backdrop--compact {
   position: absolute;
   z-index: 0;
+  border-radius: inherit;
+  transform: translateZ(0);
 }
 
 .animated-backdrop__base,
+.animated-backdrop__veil,
 .animated-backdrop__layer,
+.animated-backdrop__orb,
+.animated-backdrop__ribbon,
 .animated-backdrop__grid,
-.animated-backdrop__sparkles {
+.animated-backdrop__sparkles,
+.animated-backdrop__texture {
   position: absolute;
   inset: 0;
 }
 
 .animated-backdrop__base {
   background:
-    radial-gradient(circle at 18% 14%, color-mix(in oklab, var(--theme-border-start) 42%, transparent), transparent 44%),
-    radial-gradient(circle at 84% 18%, color-mix(in oklab, var(--theme-border-end) 38%, transparent), transparent 40%),
+    radial-gradient(circle at 16% 16%, color-mix(in oklab, var(--theme-border-start) 48%, transparent), transparent 34%),
+    radial-gradient(circle at 84% 18%, color-mix(in oklab, var(--theme-border-end) 44%, transparent), transparent 36%),
+    radial-gradient(circle at 52% 88%, color-mix(in oklab, var(--theme-border-mid) 30%, transparent), transparent 42%),
     linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
 }
 
+.animated-backdrop__veil {
+  background:
+    linear-gradient(115deg, transparent 0 30%, color-mix(in oklab, white 16%, transparent) 46%, transparent 63%),
+    radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--theme-card) 18%, transparent), transparent 56%);
+  opacity: 0.42;
+  mix-blend-mode: screen;
+  animation: backdropSlide 18s ease-in-out infinite alternate;
+}
+
 .animated-backdrop__layer {
-  filter: blur(34px);
-  opacity: 0.58;
+  filter: blur(38px) saturate(1.18);
+  opacity: 0.68;
+  mix-blend-mode: screen;
 }
 
 .animated-backdrop__layer--1,
@@ -1120,123 +1164,395 @@ textarea {
 }
 
 .animated-backdrop__layer--1 {
-  width: 42vw;
-  height: 42vw;
-  left: -10vw;
-  top: 10vh;
-  background: color-mix(in oklab, var(--theme-border-start) 42%, transparent);
-  animation: floatA 11s ease-in-out infinite alternate;
+  width: 48vw;
+  height: 48vw;
+  left: -14vw;
+  top: 4vh;
+  background: color-mix(in oklab, var(--theme-border-start) 58%, transparent);
+  animation: backdropFloat 14s ease-in-out infinite alternate;
 }
 
 .animated-backdrop__layer--2 {
-  width: 34vw;
-  height: 34vw;
+  width: 38vw;
+  height: 38vw;
   right: -6vw;
-  top: 12vh;
-  background: color-mix(in oklab, var(--theme-border-end) 38%, transparent);
-  animation: floatB 13s ease-in-out infinite alternate;
+  top: 8vh;
+  background: color-mix(in oklab, var(--theme-border-end) 54%, transparent);
+  animation: backdropFloat 17s ease-in-out infinite alternate-reverse;
 }
 
 .animated-backdrop__layer--3 {
-  width: 44vw;
-  height: 22vw;
-  left: 28vw;
-  bottom: 12vh;
-  background: color-mix(in oklab, var(--theme-border-mid) 28%, transparent);
-  animation: pulseA 8s ease-in-out infinite alternate;
+  width: 52vw;
+  height: 24vw;
+  left: 24vw;
+  bottom: 8vh;
+  background: color-mix(in oklab, var(--theme-border-mid) 42%, transparent);
+  animation: backdropPulse 10s ease-in-out infinite alternate;
 }
 
 .animated-backdrop__layer--4 {
-  width: 18vw;
-  height: 18vw;
+  width: 20vw;
+  height: 20vw;
   right: 18vw;
-  bottom: 16vh;
-  background: color-mix(in oklab, var(--theme-accent) 24%, transparent);
-  animation: rotateSlow 18s linear infinite;
+  bottom: 18vh;
+  background: color-mix(in oklab, var(--theme-accent) 34%, transparent);
+  animation: backdropSpin 24s linear infinite;
 }
 
 .animated-backdrop__layer--5 {
-  width: 28vw;
-  height: 10vw;
-  left: 12vw;
-  top: 58vh;
-  background: color-mix(in oklab, var(--theme-border-start) 22%, transparent);
-  animation: driftWide 12s ease-in-out infinite alternate;
+  width: 40vw;
+  height: 12vw;
+  left: 10vw;
+  top: 60vh;
+  background: color-mix(in oklab, var(--theme-border-start) 32%, transparent);
+  animation: backdropRibbon 15s ease-in-out infinite alternate;
+}
+
+.animated-backdrop__orb {
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, white 54%, transparent);
+  box-shadow: inset 0 0 34px color-mix(in oklab, var(--theme-card) 20%, transparent);
+  opacity: 0.32;
+  mix-blend-mode: screen;
+}
+
+.animated-backdrop__orb--1 {
+  width: 24vw;
+  height: 24vw;
+  left: 6vw;
+  bottom: 10vh;
+  animation: backdropOrbit 22s linear infinite;
+}
+
+.animated-backdrop__orb--2 {
+  width: 12vw;
+  height: 12vw;
+  right: 22vw;
+  top: 16vh;
+  animation: backdropOrbit 16s linear infinite reverse;
+}
+
+.animated-backdrop__ribbon {
+  height: 18vh;
+  opacity: 0.28;
+  filter: blur(18px) saturate(1.25);
+  mix-blend-mode: screen;
+  transform-origin: center;
+}
+
+.animated-backdrop__ribbon--1 {
+  top: 14vh;
+  background: linear-gradient(90deg, transparent, var(--theme-border-start), var(--theme-border-end), transparent);
+  animation: backdropRibbon 19s ease-in-out infinite alternate;
+}
+
+.animated-backdrop__ribbon--2 {
+  bottom: 8vh;
+  background: linear-gradient(90deg, transparent, var(--theme-border-mid), var(--theme-accent), transparent);
+  animation: backdropRibbon 23s ease-in-out infinite alternate-reverse;
 }
 
 .animated-backdrop__grid {
-  opacity: 0.16;
+  opacity: 0.18;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.32) 1px, transparent 1px);
-  background-size: 30px 30px;
-  mask-image: radial-gradient(circle at 50% 28%, black, transparent 76%);
+    linear-gradient(color-mix(in oklab, white 40%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, white 30%, transparent) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at 50% 32%, black, transparent 72%);
 }
 
 .animated-backdrop__sparkles {
-  opacity: 0.18;
+  opacity: 0.26;
   background:
-    radial-gradient(circle at 12% 18%, white 0 1px, transparent 2px),
-    radial-gradient(circle at 78% 28%, white 0 1px, transparent 2px),
-    radial-gradient(circle at 56% 72%, white 0 1.4px, transparent 2.4px),
-    radial-gradient(circle at 28% 84%, white 0 1px, transparent 2px);
-  animation: driftUp 18s linear infinite;
+    radial-gradient(circle at 12% 18%, white 0 1.3px, transparent 2.4px),
+    radial-gradient(circle at 78% 28%, white 0 1px, transparent 2.2px),
+    radial-gradient(circle at 56% 72%, white 0 1.6px, transparent 2.8px),
+    radial-gradient(circle at 28% 84%, white 0 1px, transparent 2.2px);
+  background-size: 100% 100%, 92% 92%, 82% 82%, 74% 74%;
+  animation: backdropSparkle 18s linear infinite;
 }
 
-.animated-backdrop[data-style="aquaOrbit"] .animated-backdrop__layer--1,
-.animated-backdrop[data-style="retroSpark"] .animated-backdrop__layer--1,
-.animated-backdrop[data-style="prismStorm"] .animated-backdrop__layer--4 {
-  border: 18px solid color-mix(in oklab, var(--theme-border-mid) 36%, transparent);
-  background: transparent;
+.animated-backdrop__texture {
+  opacity: 0.1;
+  background-image:
+    radial-gradient(circle at center, color-mix(in oklab, white 34%, transparent) 0 1px, transparent 1.5px);
+  background-size: 18px 18px;
+  mix-blend-mode: overlay;
 }
 
-.animated-backdrop[data-style="neonPulse"] .animated-backdrop__layer--3,
-.animated-backdrop[data-style="geoDrift"] .animated-backdrop__layer--3 {
-  border-radius: 48px;
+.animated-backdrop--compact .animated-backdrop__veil,
+.animated-backdrop--compact .animated-backdrop__orb,
+.animated-backdrop--compact .animated-backdrop__ribbon,
+.animated-backdrop--compact .animated-backdrop__texture {
+  opacity: 0.28;
 }
 
-.animated-backdrop[data-style="emberGlow"] .animated-backdrop__layer--5,
-.animated-backdrop[data-style="sunsetWave"] .animated-backdrop__layer--5,
-.animated-backdrop[data-style="ribbonFlux"] .animated-backdrop__layer--5 {
-  border-radius: 120px;
-  width: 62vw;
+.animated-backdrop--compact .animated-backdrop__layer {
+  filter: blur(18px) saturate(1.25);
 }
 
-.animated-backdrop[data-style="auroraBloom"] .animated-backdrop__layer--1,
-.animated-backdrop[data-style="auroraBloom"] .animated-backdrop__layer--2,
-.animated-backdrop[data-style="sunsetWave"] .animated-backdrop__layer--2,
-.animated-backdrop[data-style="peachDrift"] .animated-backdrop__layer--3 {
-  width: 70vw;
-  height: 14vw;
-}
-
-.animated-backdrop[data-style="kaleidoscope"] .animated-backdrop__grid,
-.animated-backdrop[data-style="monsoonMatrix"] .animated-backdrop__grid {
-  opacity: 0.22;
-  transform: rotate(8deg) scale(1.08);
-}
-
-.animated-backdrop[data-style="starlitConfetti"] .animated-backdrop__sparkles {
-  opacity: 0.34;
-}
-
-.animated-backdrop[data-style="twilightPulse"] .animated-backdrop__layer--2 {
-  border-radius: 44px;
-}
-
-.animated-backdrop[data-style="ribbonFlux"] .animated-backdrop__layer--2,
-.animated-backdrop[data-style="ribbonFlux"] .animated-backdrop__layer--3 {
-  border-radius: 0;
-  clip-path: ellipse(48% 32% at 50% 50%);
-}
-
-.animated-backdrop[data-style="geoDrift"] .animated-backdrop__layer--4,
-.animated-backdrop[data-style="prismStorm"] .animated-backdrop__layer--2 {
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+.animated-backdrop[data-style="softGlow"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 22% 20%, rgba(255, 248, 233, 0.78), transparent 28%),
+    radial-gradient(circle at 78% 18%, rgba(181, 242, 211, 0.52), transparent 32%),
+    radial-gradient(circle at 42% 78%, rgba(179, 237, 247, 0.42), transparent 42%),
+    linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
 }
 
 .animated-backdrop[data-style="softGlow"] .animated-backdrop__grid {
-  opacity: 0.1;
+  opacity: 0.07;
+}
+
+.animated-backdrop[data-style="aquaOrbit"] .animated-backdrop__orb {
+  opacity: 0.58;
+  border-width: 10px;
+  border-color: color-mix(in oklab, var(--theme-border-mid) 54%, transparent);
+}
+
+.animated-backdrop[data-style="aquaOrbit"] .animated-backdrop__grid {
+  background-image: repeating-radial-gradient(circle at 50% 50%, transparent 0 26px, color-mix(in oklab, white 28%, transparent) 27px 28px);
+  background-size: 100% 100%;
+}
+
+.animated-backdrop[data-style="neonPulse"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(70, 200, 255, 0.32), transparent 30%),
+    radial-gradient(circle at 82% 28%, rgba(255, 64, 220, 0.32), transparent 28%),
+    linear-gradient(135deg, #07112f, #13071f 55%, #061b25);
+}
+
+.animated-backdrop[data-style="neonPulse"] .animated-backdrop__grid {
+  opacity: 0.34;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--theme-border-end) 52%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--theme-border-start) 48%, transparent) 1px, transparent 1px);
+  animation: backdropSlide 7s linear infinite;
+}
+
+.animated-backdrop[data-style="neonPulse"] .animated-backdrop__ribbon {
+  opacity: 0.48;
+  filter: blur(8px);
+}
+
+.animated-backdrop[data-style="emberGlow"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 50% 105%, rgba(255, 126, 53, 0.72), transparent 44%),
+    radial-gradient(circle at 20% 20%, rgba(255, 210, 118, 0.26), transparent 24%),
+    linear-gradient(160deg, #21100f, #0d0c18 62%, #1b0f14);
+}
+
+.animated-backdrop[data-style="emberGlow"] .animated-backdrop__sparkles {
+  opacity: 0.48;
+  background-image:
+    radial-gradient(circle, rgba(255, 219, 146, 0.9) 0 2px, transparent 3px),
+    radial-gradient(circle, rgba(255, 111, 53, 0.8) 0 1.5px, transparent 2.8px);
+  background-size: 120px 120px, 76px 76px;
+}
+
+.animated-backdrop[data-style="auroraBloom"] .animated-backdrop__ribbon {
+  height: 42vh;
+  opacity: 0.52;
+  filter: blur(20px) saturate(1.45);
+  transform: rotate(-10deg);
+}
+
+.animated-backdrop[data-style="auroraBloom"] .animated-backdrop__grid {
+  opacity: 0.06;
+}
+
+.animated-backdrop[data-style="retroSpark"] .animated-backdrop__texture {
+  opacity: 0.28;
+  background-image:
+    radial-gradient(circle, color-mix(in oklab, var(--theme-accent) 56%, transparent) 0 2px, transparent 2.8px);
+  background-size: 20px 20px;
+  mask-image: linear-gradient(115deg, black, transparent 78%);
+}
+
+.animated-backdrop[data-style="retroSpark"] .animated-backdrop__layer--1 {
+  border: 20px solid color-mix(in oklab, var(--theme-border-mid) 48%, transparent);
+  background: transparent;
+}
+
+.animated-backdrop[data-style="twilightPulse"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 72% 16%, rgba(255, 255, 255, 0.28), transparent 14%),
+    radial-gradient(circle at 28% 80%, rgba(112, 120, 255, 0.34), transparent 34%),
+    linear-gradient(145deg, #10153f, #30164d 50%, #071425);
+}
+
+.animated-backdrop[data-style="twilightPulse"] .animated-backdrop__sparkles,
+.animated-backdrop[data-style="starlitConfetti"] .animated-backdrop__sparkles {
+  opacity: 0.56;
+}
+
+.animated-backdrop[data-style="sunsetWave"] .animated-backdrop__base {
+  background:
+    linear-gradient(180deg, rgba(255, 195, 116, 0.66), transparent 38%),
+    radial-gradient(circle at 76% 18%, rgba(255, 109, 87, 0.48), transparent 26%),
+    linear-gradient(160deg, #ffcc8a, #e86f74 48%, #314a84);
+}
+
+.animated-backdrop[data-style="sunsetWave"] .animated-backdrop__ribbon {
+  height: 22vh;
+  opacity: 0.42;
+  transform: rotate(-4deg);
+}
+
+.animated-backdrop[data-style="peachDrift"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 18% 78%, rgba(255, 218, 198, 0.78), transparent 36%),
+    radial-gradient(circle at 76% 26%, rgba(255, 181, 198, 0.52), transparent 30%),
+    linear-gradient(135deg, #ffe8cd, #f8bfd4 52%, #bdeef4);
+}
+
+.animated-backdrop[data-style="peachDrift"] .animated-backdrop__layer {
+  border-radius: 38% 62% 60% 40% / 44% 48% 52% 56%;
+}
+
+.animated-backdrop[data-style="prismStorm"] .animated-backdrop__layer {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 38%, 78% 100%, 15% 86%, 0 24%);
+  filter: blur(18px) saturate(1.6);
+}
+
+.animated-backdrop[data-style="prismStorm"] .animated-backdrop__base {
+  background:
+    conic-gradient(from 120deg at 50% 50%, rgba(255, 255, 255, 0.16), transparent, rgba(88, 228, 255, 0.22), transparent, rgba(255, 88, 210, 0.2)),
+    linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
+}
+
+.animated-backdrop[data-style="ribbonFlux"] .animated-backdrop__layer {
+  opacity: 0.18;
+}
+
+.animated-backdrop[data-style="ribbonFlux"] .animated-backdrop__ribbon {
+  height: 30vh;
+  opacity: 0.6;
+  filter: blur(14px) saturate(1.5);
+  clip-path: polygon(0 44%, 16% 26%, 36% 54%, 58% 32%, 80% 60%, 100% 36%, 100% 74%, 0 82%);
+}
+
+.animated-backdrop[data-style="starlitConfetti"] .animated-backdrop__texture {
+  opacity: 0.3;
+  background-image:
+    linear-gradient(45deg, transparent 45%, color-mix(in oklab, var(--theme-accent) 65%, transparent) 46% 54%, transparent 55%),
+    radial-gradient(circle, white 0 1.4px, transparent 2.2px);
+  background-size: 52px 52px, 88px 88px;
+  animation: backdropSparkle 12s linear infinite;
+}
+
+.animated-backdrop[data-style="geoDrift"] .animated-backdrop__grid {
+  opacity: 0.34;
+  background-image:
+    linear-gradient(45deg, color-mix(in oklab, white 26%, transparent) 1px, transparent 1px),
+    linear-gradient(-45deg, color-mix(in oklab, white 20%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  transform: rotate(8deg) scale(1.12);
+}
+
+.animated-backdrop[data-style="geoDrift"] .animated-backdrop__layer--4 {
+  border-radius: 18px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.animated-backdrop[data-style="kaleidoscope"] .animated-backdrop__base {
+  background:
+    conic-gradient(from 0deg at 50% 50%, var(--theme-border-start), var(--theme-border-mid), var(--theme-border-end), var(--theme-accent), var(--theme-border-start));
+  animation: backdropSpin 34s linear infinite;
+}
+
+.animated-backdrop[data-style="kaleidoscope"] .animated-backdrop__veil {
+  opacity: 0.34;
+  background:
+    repeating-conic-gradient(from 45deg, rgba(255, 255, 255, 0.12) 0 10deg, transparent 10deg 20deg);
+  mix-blend-mode: overlay;
+}
+
+.animated-backdrop[data-style="monsoonMatrix"] .animated-backdrop__base {
+  background:
+    linear-gradient(180deg, rgba(80, 255, 214, 0.1), transparent 34%),
+    linear-gradient(135deg, #071d28, #0b1127 62%, #031a16);
+}
+
+.animated-backdrop[data-style="monsoonMatrix"] .animated-backdrop__grid {
+  opacity: 0.42;
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 28px, color-mix(in oklab, var(--theme-border-mid) 42%, transparent) 29px 30px),
+    repeating-linear-gradient(180deg, color-mix(in oklab, white 18%, transparent) 0 2px, transparent 2px 18px);
+  background-size: 100% 100%, 100% 36px;
+  animation: backdropRain 1.8s linear infinite;
+  mask-image: linear-gradient(180deg, transparent, black 16%, black 86%, transparent);
+}
+
+@keyframes backdropFloat {
+  from {
+    transform: translate3d(0, 0, 0) scale(0.94) rotate(-4deg);
+  }
+  to {
+    transform: translate3d(10vw, -7vh, 0) scale(1.08) rotate(8deg);
+  }
+}
+
+@keyframes backdropPulse {
+  from {
+    transform: scale(0.88) rotate(-8deg);
+    opacity: 0.42;
+  }
+  to {
+    transform: scale(1.08) rotate(10deg);
+    opacity: 0.76;
+  }
+}
+
+@keyframes backdropSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes backdropOrbit {
+  from {
+    transform: rotate(0deg) translateX(18px) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(18px) rotate(-360deg);
+  }
+}
+
+@keyframes backdropRibbon {
+  from {
+    transform: translateX(-8vw) rotate(-8deg) scaleY(0.92);
+  }
+  to {
+    transform: translateX(8vw) rotate(8deg) scaleY(1.08);
+  }
+}
+
+@keyframes backdropSlide {
+  from {
+    transform: translateX(-5%) skewX(-8deg);
+  }
+  to {
+    transform: translateX(5%) skewX(8deg);
+  }
+}
+
+@keyframes backdropSparkle {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -34px, 0);
+  }
+}
+
+@keyframes backdropRain {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 0 0, 0 36px;
+  }
 }
 
 .island-kicker {
@@ -1318,6 +1634,14 @@ textarea {
   }
   to {
     transform: translateY(-30px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-backdrop *,
+  .rise-in {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 

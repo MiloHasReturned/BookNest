@@ -121,21 +121,21 @@ export const BACKGROUND_ANIMATION_STYLES: Array<{
   id: BackgroundAnimationStyle
   label: string
 }> = [
-  { id: 'softGlow', label: 'Soft Glow' },
-  { id: 'aquaOrbit', label: 'Aqua Orbit' },
-  { id: 'neonPulse', label: 'Neon Pulse' },
-  { id: 'emberGlow', label: 'Ember Glow' },
-  { id: 'auroraBloom', label: 'Aurora Bloom' },
-  { id: 'retroSpark', label: 'Retro Spark' },
+  { id: 'softGlow', label: 'Velvet Glow' },
+  { id: 'aquaOrbit', label: 'Tide Orbit' },
+  { id: 'neonPulse', label: 'Neon Circuit' },
+  { id: 'emberGlow', label: 'Ember Hearth' },
+  { id: 'auroraBloom', label: 'Aurora Veil' },
+  { id: 'retroSpark', label: 'Retro Soda' },
   { id: 'twilightPulse', label: 'Twilight Pulse' },
-  { id: 'sunsetWave', label: 'Sunset Wave' },
-  { id: 'peachDrift', label: 'Peach Drift' },
-  { id: 'prismStorm', label: 'Prism Storm' },
-  { id: 'ribbonFlux', label: 'Ribbon Flux' },
-  { id: 'starlitConfetti', label: 'Starlit Confetti' },
+  { id: 'sunsetWave', label: 'Golden Hour' },
+  { id: 'peachDrift', label: 'Peach Cloud' },
+  { id: 'prismStorm', label: 'Prism Shards' },
+  { id: 'ribbonFlux', label: 'Ribbon Current' },
+  { id: 'starlitConfetti', label: 'Star Confetti' },
   { id: 'geoDrift', label: 'Geo Drift' },
-  { id: 'kaleidoscope', label: 'Kaleidoscope' },
-  { id: 'monsoonMatrix', label: 'Monsoon Matrix' },
+  { id: 'kaleidoscope', label: 'Kaleidoscope Glass' },
+  { id: 'monsoonMatrix', label: 'Monsoon Code' },
 ]
 
 export const DEFAULT_THEME: AppTheme = {
