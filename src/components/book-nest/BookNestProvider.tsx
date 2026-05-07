@@ -339,13 +339,55 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       }))
     },
     saveAccountProfile(profile) {
+      const accountProfile = {
+        email: profile.email.trim(),
+        username: profile.username.trim(),
+        imageData: profile.imageData,
+      }
+      const idToken = readGoogleIdToken()
+
+      if (idToken && !snapshotHasUserData(snapshotRef.current)) {
+        const localSnapshot = {
+          ...createEmptySnapshot(snapshotRef.current.theme),
+          accountProfile,
+        }
+
+        setCloudReady(false)
+        setCloudStatus('syncing')
+        setCloudError(null)
+        setSnapshot(localSnapshot)
+
+        void loadCloudSnapshot({
+          data: {
+            idToken,
+            localSnapshot,
+          },
+        })
+          .then((result) => {
+            if (result.ok && result.snapshot) {
+              setSnapshot(result.snapshot)
+              setCloudStatus('synced')
+              setCloudError(null)
+            } else {
+              setSnapshot(localSnapshot)
+              setCloudStatus('synced')
+            }
+          })
+          .catch((error) => {
+            setSnapshot(localSnapshot)
+            setCloudStatus('error')
+            setCloudError(error instanceof Error ? error.message : 'Cloud sync failed.')
+          })
+          .finally(() => {
+            setCloudReady(true)
+          })
+
+        return
+      }
+
       setSnapshot((current) => ({
         ...current,
-        accountProfile: {
-          email: profile.email.trim(),
-          username: profile.username.trim(),
-          imageData: profile.imageData,
-        },
+        accountProfile,
       }))
     },
     clearAccountProfile() {
@@ -653,6 +695,17 @@ export function useBookNest() {
   }
 
   return context
+}
+
+function snapshotHasUserData(snapshot: BookNestSnapshot) {
+  return (
+    snapshot.calendars.length > 0 ||
+    snapshot.invitedCalendars.length > 0 ||
+    snapshot.invites.length > 0 ||
+    Object.keys(snapshot.reservationsByCalendar).length > 0 ||
+    Object.keys(snapshot.dayNotesByCalendar).length > 0 ||
+    Object.keys(snapshot.chatByCalendar).length > 0
+  )
 }
 
 export function makeReservation(input: {

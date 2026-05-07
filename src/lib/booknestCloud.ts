@@ -240,7 +240,6 @@ export const saveCloudSnapshot = createServerFn({ method: 'POST' })
     await upsertOwnedCalendars(user.email, snapshot)
     await upsertAcceptedMemberships(user.email, snapshot)
     await upsertVisibleCalendarStates(user.email, snapshot)
-    await deleteRemovedOwnedCalendars(user.email, snapshot)
 
     return {
       ok: true,
@@ -641,26 +640,6 @@ async function upsertVisibleCalendarStates(email: string, snapshot: BookNestSnap
       },
       body: JSON.stringify(rows),
     },
-  )
-}
-
-async function deleteRemovedOwnedCalendars(email: string, snapshot: BookNestSnapshot) {
-  const existing = await getOwnedCalendars(email)
-  const retainedIds = new Set(snapshot.calendars.map((calendar) => calendar.id))
-  const removed = existing.filter((calendar) => !retainedIds.has(calendar.id))
-
-  await Promise.all(
-    removed.map((calendar) =>
-      supabaseRequest<null>(
-        `booknest_calendars?id=eq.${encodeURIComponent(
-          calendar.id,
-        )}&owner_email=eq.${encodeURIComponent(email)}`,
-        {
-          method: 'DELETE',
-          allowEmpty: true,
-        },
-      ),
-    ),
   )
 }
 
