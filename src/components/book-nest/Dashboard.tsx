@@ -46,6 +46,7 @@ export function BookNestDashboard() {
     createCalendar,
     createInvite,
     deleteCalendar,
+    dismissCloudError,
     leaveCalendar,
     rejectInvite,
     refreshCloudData,
@@ -156,6 +157,13 @@ export function BookNestDashboard() {
                     Clean Up Broken Local Invites
                   </button>
                 ) : null}
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={dismissCloudError}
+                >
+                  Work offline for now
+                </button>
               </div>
             </section>
           ) : null}

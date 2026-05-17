@@ -50,6 +50,7 @@ export function BookNestCalendarDetail({
     clearBrokenCloudCalendars,
     cloudError,
     cloudStatus,
+    dismissCloudError,
     refreshCloudData,
     removeReservation,
     sendMessage,
@@ -162,6 +163,13 @@ export function BookNestCalendarDetail({
                     Clean Up Broken Local Invites
                   </button>
                 ) : null}
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={dismissCloudError}
+                >
+                  Work offline for now
+                </button>
               </div>
             </section>
           ) : null}

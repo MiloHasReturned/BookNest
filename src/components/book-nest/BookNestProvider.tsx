@@ -40,6 +40,7 @@ type BookNestContextValue = {
   cloudError: string | null
   refreshCloudData: (options?: { silent?: boolean }) => Promise<void>
   syncCloudData: () => Promise<boolean>
+  dismissCloudError: () => void
   clearBrokenCloudCalendars: () => Promise<void>
   createCalendar: (name: string, tintIndex: number) => void
   saveAccountProfile: (profile: AccountProfile) => void
@@ -86,6 +87,7 @@ type ColorEditableThemeKeys = Pick<
 >
 
 const BookNestContext = createContext<BookNestContextValue | null>(null)
+const CLOUD_ERROR_DISMISS_MS = 5 * 60 * 1000
 
 export function BookNestProvider({ children }: { children: ReactNode }) {
   const [snapshot, setSnapshot] = useState<BookNestSnapshot>(() => readSnapshot())
@@ -95,6 +97,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   const [cloudError, setCloudError] = useState<string | null>(null)
   const cloudSaveErrorLogged = useRef(false)
   const cloudLoadFailureCount = useRef(0)
+  const cloudErrorDismissedUntil = useRef(0)
   const snapshotRef = useRef(snapshot)
 
   useEffect(() => {
@@ -121,8 +124,24 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     )
   }
 
+  function isCloudErrorDismissed() {
+    return Date.now() < cloudErrorDismissedUntil.current
+  }
+
+  function dismissCloudError() {
+    cloudErrorDismissedUntil.current = Date.now() + CLOUD_ERROR_DISMISS_MS
+    setCloudStatus('local')
+    setCloudError(null)
+  }
+
   function reportCloudLoadFailure(error: unknown, silent: boolean) {
     cloudLoadFailureCount.current += 1
+
+    if (isCloudErrorDismissed()) {
+      setCloudStatus('local')
+      setCloudError(null)
+      return
+    }
 
     if (silent && isTransientFetchError(error) && cloudLoadFailureCount.current < 3) {
       setCloudStatus(snapshotRef.current.accountProfile ? 'synced' : 'local')
@@ -147,6 +166,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     }
 
     if (!silent) {
+      cloudErrorDismissedUntil.current = 0
       setCloudStatus('syncing')
     }
 
@@ -198,7 +218,12 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       return true
     } catch (error) {
       setCloudStatus('error')
-      setCloudError(errorMessage(error, 'Cloud sync failed.'))
+      if (isCloudErrorDismissed()) {
+        setCloudStatus('local')
+        setCloudError(null)
+      } else {
+        setCloudError(errorMessage(error, 'Cloud sync failed.'))
+      }
       console.error('[BookNest] Cloud save failed', error)
       return false
     }
@@ -268,12 +293,12 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     }
 
     function handleFocus() {
-      void refreshCloudData()
+      void refreshCloudData({ silent: true })
     }
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        void refreshCloudData()
+        void refreshCloudData({ silent: true })
       }
     }
 
@@ -335,8 +360,13 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           }
         })
         .catch((error) => {
-          setCloudStatus('error')
-          setCloudError(errorMessage(error, 'Cloud sync failed.'))
+          if (isCloudErrorDismissed()) {
+            setCloudStatus('local')
+            setCloudError(null)
+          } else {
+            setCloudStatus('error')
+            setCloudError(errorMessage(error, 'Cloud sync failed.'))
+          }
           if (!cloudSaveErrorLogged.current) {
             cloudSaveErrorLogged.current = true
             console.error('[BookNest] Cloud save failed', error)
@@ -355,6 +385,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     cloudError,
     refreshCloudData,
     syncCloudData,
+    dismissCloudError,
     clearBrokenCloudCalendars,
     createCalendar(name, tintIndex) {
       const trimmedName = name.trim()
