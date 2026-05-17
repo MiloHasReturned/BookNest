@@ -77,6 +77,7 @@ export function BookNestCalendarDetail({
   const reservations = snapshot.reservationsByCalendar[calendarId] ?? []
   const messages = snapshot.chatByCalendar[calendarId] ?? []
   const dayNotes = snapshot.dayNotesByCalendar[calendarId] ?? {}
+  const canCleanCloudError = isCleanableCloudError(cloudError)
 
   useEffect(() => {
     if (endDate < selectedDate) {
@@ -152,13 +153,15 @@ export function BookNestCalendarDetail({
                 >
                   Retry Sync
                 </button>
-                <button
-                  type="button"
-                  className="pill-button"
-                  onClick={() => void clearBrokenCloudCalendars()}
-                >
-                  Clean Up Broken Local Invites
-                </button>
+                {canCleanCloudError ? (
+                  <button
+                    type="button"
+                    className="pill-button"
+                    onClick={() => void clearBrokenCloudCalendars()}
+                  >
+                    Clean Up Broken Local Invites
+                  </button>
+                ) : null}
               </div>
             </section>
           ) : null}
@@ -802,6 +805,14 @@ function Avatar({
       {initials || 'BN'}
     </div>
   )
+}
+
+function isCleanableCloudError(error: string | null) {
+  if (!error) {
+    return false
+  }
+
+  return /broken|foreign key|calendar-not-found|not present in table/i.test(error)
 }
 
 function formatDateForInput(date: Date) {

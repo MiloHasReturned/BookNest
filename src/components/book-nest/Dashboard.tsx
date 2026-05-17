@@ -48,6 +48,7 @@ export function BookNestDashboard() {
     deleteCalendar,
     leaveCalendar,
     rejectInvite,
+    refreshCloudData,
     resetTheme,
     saveAccountProfile,
     setAnimationStyle,
@@ -66,6 +67,7 @@ export function BookNestDashboard() {
   const invitedCalendars = snapshot.invitedCalendars.filter((calendar) =>
     !searchValue ? true : calendar.name.toLowerCase().includes(searchValue),
   )
+  const canCleanCloudError = isCleanableCloudError(cloudError)
 
   useEffect(() => {
     const inviteParam = new URLSearchParams(window.location.search).get('invite')
@@ -141,10 +143,19 @@ export function BookNestDashboard() {
                 <button
                   type="button"
                   className="pill-button"
-                  onClick={() => void clearBrokenCloudCalendars()}
+                  onClick={() => void refreshCloudData()}
                 >
-                  Clean Up Broken Local Invites
+                  Retry Sync
                 </button>
+                {canCleanCloudError ? (
+                  <button
+                    type="button"
+                    className="pill-button"
+                    onClick={() => void clearBrokenCloudCalendars()}
+                  >
+                    Clean Up Broken Local Invites
+                  </button>
+                ) : null}
               </div>
             </section>
           ) : null}
@@ -925,6 +936,14 @@ function Avatar({
 
 function EmptyMessage({ children }: { children: ReactNode }) {
   return <div className="empty-state">{children}</div>
+}
+
+function isCleanableCloudError(error: string | null) {
+  if (!error) {
+    return false
+  }
+
+  return /broken|foreign key|calendar-not-found|not present in table/i.test(error)
 }
 
 async function readFileAsDataUrl(file: File) {
