@@ -69,6 +69,7 @@ export function BookNestDashboard() {
     !searchValue ? true : calendar.name.toLowerCase().includes(searchValue),
   )
   const canCleanCloudError = isCleanableCloudError(cloudError)
+  const totalCalendars = snapshot.calendars.length + snapshot.invitedCalendars.length
 
   useEffect(() => {
     const inviteParam = new URLSearchParams(window.location.search).get('invite')
@@ -120,20 +121,48 @@ export function BookNestDashboard() {
         <div className="page-wrap booknest-app-shell">
           <section className="book-card book-card--hero rise-in">
             <div>
+              <p className="section-eyebrow">Shared time, calmer planning</p>
               <h1 className="book-hero-title">Welcome to Book Nest</h1>
               <p className="book-hero-copy">
                 Create shared calendars, reserve time, and keep the crew in sync.
               </p>
+              <div className="hero-actions">
+                <button
+                  type="button"
+                  className="action-button action-button--primary"
+                  onClick={() => setShowCreateCalendar(true)}
+                >
+                  <CalendarPlus2 size={16} />
+                  <span>Create Calendar</span>
+                </button>
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => setShowAccountEditor(true)}
+                >
+                  <UserPlus2 size={16} />
+                  <span>
+                    {snapshot.accountProfile ? 'Edit Account' : 'Create Account'}
+                  </span>
+                </button>
+              </div>
             </div>
 
-            <button
-              type="button"
-              className="icon-chip"
-              aria-label="Customize Book Nest"
-              onClick={() => setShowCustomization(true)}
-            >
-              <SlidersHorizontal size={18} strokeWidth={2.2} />
-            </button>
+            <div className="hero-panel">
+              <button
+                type="button"
+                className="icon-chip icon-chip--large"
+                aria-label="Customize Book Nest"
+                onClick={() => setShowCustomization(true)}
+              >
+                <SlidersHorizontal size={18} strokeWidth={2.2} />
+              </button>
+              <div className="dashboard-metrics">
+                <MetricCard label="Calendars" value={totalCalendars} />
+                <MetricCard label="Invites" value={snapshot.invites.length} />
+                <MetricCard label="Upcoming" value={upcoming.length} />
+              </div>
+            </div>
           </section>
 
           {cloudStatus === 'error' && cloudError ? (
@@ -168,232 +197,221 @@ export function BookNestDashboard() {
             </section>
           ) : null}
 
-          <section className="book-card rise-in" style={{ animationDelay: '70ms' }}>
-            <div className="action-grid">
-              <button
-                type="button"
-                className="action-button action-button--primary"
-                onClick={() => setShowCreateCalendar(true)}
-              >
-                <CalendarPlus2 size={16} />
-                <span>Create Calendar</span>
-              </button>
-
-              <button
-                type="button"
-                className="action-button"
-                onClick={() => setShowAccountEditor(true)}
-              >
-                <UserPlus2 size={16} />
-                <span>
-                  {snapshot.accountProfile ? 'Edit Account' : 'Create Account'}
-                </span>
-              </button>
-            </div>
-          </section>
-
-          {snapshot.accountProfile ? (
-            <section className="book-card rise-in" style={{ animationDelay: '110ms' }}>
-              <div className="account-row">
-                <Avatar
-                  imageData={snapshot.accountProfile.imageData}
-                  label={snapshot.accountProfile.username}
-                  className="avatar-shell avatar-shell--large"
-                />
-                <div className="account-details">
-                  <p className="account-name">{snapshot.accountProfile.username}</p>
-                  {snapshot.accountProfile.email ? (
-                    <p className="account-meta">{snapshot.accountProfile.email}</p>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => setShowAccountEditor(true)}
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="text-button text-button--muted"
-                  onClick={clearAccountProfile}
-                >
-                  <LogOut size={14} />
-                  Sign out
-                </button>
-              </div>
-            </section>
-          ) : null}
-
-          <section className="book-card rise-in" style={{ animationDelay: '140ms' }}>
-            <div className="section-stack">
-              <h2 className="section-heading">Find Calendars</h2>
-              <label className="search-shell">
-                <Search size={16} />
-                <input
-                  type="text"
-                  placeholder="Search by name"
-                  aria-label="Search calendars"
-                  value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                />
-              </label>
-            </div>
-          </section>
-
-          <section className="book-card rise-in" style={{ animationDelay: '170ms' }}>
-            <div className="section-stack">
-              <div className="section-head">
-                <h2 className="section-heading">New Invites</h2>
-                {snapshot.invites.length ? (
-                  <button
-                    type="button"
-                    className="text-button text-button--muted"
-                    onClick={clearInvites}
-                  >
-                    Clear All
-                  </button>
-                ) : null}
-              </div>
-
-              {snapshot.invites.length ? (
-                <div className="section-list">
-                  {snapshot.invites.map((invite) => (
-                    <article key={invite.id} className="box-row">
-                      <div className="row-icon">
-                        <Mail size={16} />
-                      </div>
-                      <div className="row-copy">
-                        <p className="row-title">{invite.calendarName}</p>
-                        <p className="row-meta">
-                          From {invite.senderName} • {invite.recipient}
-                        </p>
-                      </div>
-                      <div className="inline-actions">
-                        <button
-                          type="button"
-                          className="text-button"
-                          onClick={() => acceptInvite(invite.id)}
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          className="text-button text-button--muted"
-                          onClick={() => rejectInvite(invite.id)}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <EmptyMessage>No invites yet.</EmptyMessage>
-              )}
-            </div>
-          </section>
-
-          <section className="book-card rise-in" style={{ animationDelay: '210ms' }}>
-            <div className="section-stack">
-              <h2 className="section-heading">Upcoming Reservations</h2>
-              {upcoming.length ? (
-                <div className="section-list">
-                  {upcoming.map((reservation) => (
-                    <Link
-                      key={reservation.id}
-                      to="/calendar/$calendarId"
-                      params={{ calendarId: reservation.calendarId }}
-                      className="box-row box-row--interactive"
-                    >
-                      <Avatar
-                        imageData={reservation.imageData}
-                        label={reservation.person}
-                        className="person-avatar"
+          <div className="dashboard-layout">
+            <div className="dashboard-main">
+              <section className="book-card rise-in" style={{ animationDelay: '90ms' }}>
+                <div className="section-stack">
+                  <div className="section-head">
+                    <div>
+                      <p className="section-eyebrow">Library</p>
+                      <h2 className="section-heading">Your Calendars</h2>
+                    </div>
+                    <label className="search-shell search-shell--compact">
+                      <Search size={16} />
+                      <input
+                        type="text"
+                        placeholder="Search"
+                        aria-label="Search calendars"
+                        value={searchText}
+                        onChange={(event) => setSearchText(event.target.value)}
                       />
-                      <div className="row-copy">
-                        <p className="row-title">{reservation.title}</p>
-                        <p className="row-meta">
-                          {reservation.calendarName} •{' '}
-                          {formatRange(reservation.date, reservation.endDate)} •{' '}
-                          {reservation.time}
-                        </p>
-                      </div>
-                      <span
-                        className="tint-dot"
-                        style={{
-                          backgroundColor: getCalendarTint(reservation.tintIndex),
-                        }}
-                      />
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <EmptyMessage>No upcoming reservations yet.</EmptyMessage>
-              )}
-            </div>
-          </section>
+                    </label>
+                  </div>
 
-          <section className="book-card rise-in" style={{ animationDelay: '250ms' }}>
-            <div className="section-stack">
-              <h2 className="section-heading">Invited Calendars</h2>
-              {invitedCalendars.length ? (
-                <div className="section-list">
-                  {invitedCalendars.map((calendar) => (
-                    <CalendarCard
-                      key={calendar.id}
-                      calendarId={calendar.id}
-                      name={calendar.name}
-                      tint={getCalendarTint(calendar.tintIndex)}
-                      secondaryAction={{
-                        label: 'Leave',
-                        onClick: () => leaveCalendar(calendar.id),
-                      }}
-                    />
-                  ))}
+                  {ownedCalendars.length ? (
+                    <div className="calendar-card-grid">
+                      {ownedCalendars.map((calendar) => (
+                        <CalendarCard
+                          key={calendar.id}
+                          calendarId={calendar.id}
+                          name={calendar.name}
+                          tint={getCalendarTint(calendar.tintIndex)}
+                          secondaryAction={{
+                            label: 'Delete',
+                            onClick: () => {
+                              if (
+                                window.confirm(
+                                  'Delete calendar? This removes the calendar and its reservations for everyone who has access.',
+                                )
+                              ) {
+                                deleteCalendar(calendar.id)
+                              }
+                            },
+                            destructive: true,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyMessage>
+                      {searchValue
+                        ? 'No calendars match your search.'
+                        : 'No calendars yet. Create your first calendar to see it listed here.'}
+                    </EmptyMessage>
+                  )}
                 </div>
-              ) : (
-                <EmptyMessage>No invited calendars yet.</EmptyMessage>
-              )}
-            </div>
-          </section>
+              </section>
 
-          <section className="book-card rise-in" style={{ animationDelay: '290ms' }}>
-            <div className="section-stack">
-              <h2 className="section-heading">Your Calendars</h2>
-              {ownedCalendars.length ? (
-                <div className="section-list">
-                  {ownedCalendars.map((calendar) => (
-                    <CalendarCard
-                      key={calendar.id}
-                      calendarId={calendar.id}
-                      name={calendar.name}
-                      tint={getCalendarTint(calendar.tintIndex)}
-                      secondaryAction={{
-                        label: 'Delete',
-                        onClick: () => {
-                          if (
-                            window.confirm(
-                              'Delete calendar? This removes the calendar and its reservations for everyone who has access.',
-                            )
-                          ) {
-                            deleteCalendar(calendar.id)
-                          }
-                        },
-                        destructive: true,
-                      }}
-                    />
-                  ))}
+              <section className="book-card rise-in" style={{ animationDelay: '130ms' }}>
+                <div className="section-stack">
+                  <div className="section-head">
+                    <div>
+                      <p className="section-eyebrow">Shared with you</p>
+                      <h2 className="section-heading">Invited Calendars</h2>
+                    </div>
+                  </div>
+                  {invitedCalendars.length ? (
+                    <div className="calendar-card-grid">
+                      {invitedCalendars.map((calendar) => (
+                        <CalendarCard
+                          key={calendar.id}
+                          calendarId={calendar.id}
+                          name={calendar.name}
+                          tint={getCalendarTint(calendar.tintIndex)}
+                          secondaryAction={{
+                            label: 'Leave',
+                            onClick: () => leaveCalendar(calendar.id),
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyMessage>No invited calendars yet.</EmptyMessage>
+                  )}
                 </div>
-              ) : (
-                <EmptyMessage>
-                  {searchValue
-                    ? 'No calendars match your search.'
-                    : 'No calendars yet. Create your first calendar to see it listed here.'}
-                </EmptyMessage>
-              )}
+              </section>
             </div>
-          </section>
+
+            <aside className="dashboard-side">
+              {snapshot.accountProfile ? (
+                <section className="book-card rise-in" style={{ animationDelay: '110ms' }}>
+                  <div className="account-row account-row--stacked">
+                    <Avatar
+                      imageData={snapshot.accountProfile.imageData}
+                      label={snapshot.accountProfile.username}
+                      className="avatar-shell avatar-shell--large"
+                    />
+                    <div className="account-details">
+                      <p className="account-name">{snapshot.accountProfile.username}</p>
+                      {snapshot.accountProfile.email ? (
+                        <p className="account-meta">{snapshot.accountProfile.email}</p>
+                      ) : null}
+                    </div>
+                    <div className="inline-actions">
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => setShowAccountEditor(true)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="text-button text-button--muted"
+                        onClick={clearAccountProfile}
+                      >
+                        <LogOut size={14} />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="book-card rise-in" style={{ animationDelay: '150ms' }}>
+                <div className="section-stack">
+                  <div className="section-head">
+                    <h2 className="section-heading">New Invites</h2>
+                    {snapshot.invites.length ? (
+                      <button
+                        type="button"
+                        className="text-button text-button--muted"
+                        onClick={clearInvites}
+                      >
+                        Clear All
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {snapshot.invites.length ? (
+                    <div className="section-list">
+                      {snapshot.invites.map((invite) => (
+                        <article key={invite.id} className="box-row box-row--stacked">
+                          <div className="row-icon">
+                            <Mail size={16} />
+                          </div>
+                          <div className="row-copy">
+                            <p className="row-title">{invite.calendarName}</p>
+                            <p className="row-meta">
+                              From {invite.senderName} • {invite.recipient}
+                            </p>
+                          </div>
+                          <div className="inline-actions">
+                            <button
+                              type="button"
+                              className="text-button"
+                              onClick={() => acceptInvite(invite.id)}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              className="text-button text-button--muted"
+                              onClick={() => rejectInvite(invite.id)}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyMessage>No invites yet.</EmptyMessage>
+                  )}
+                </div>
+              </section>
+
+              <section className="book-card rise-in" style={{ animationDelay: '190ms' }}>
+                <div className="section-stack">
+                  <h2 className="section-heading">Upcoming Reservations</h2>
+                  {upcoming.length ? (
+                    <div className="section-list">
+                      {upcoming.map((reservation) => (
+                        <Link
+                          key={reservation.id}
+                          to="/calendar/$calendarId"
+                          params={{ calendarId: reservation.calendarId }}
+                          className="box-row box-row--interactive"
+                        >
+                          <Avatar
+                            imageData={reservation.imageData}
+                            label={reservation.person}
+                            className="person-avatar"
+                          />
+                          <div className="row-copy">
+                            <p className="row-title">{reservation.title}</p>
+                            <p className="row-meta">
+                              {reservation.calendarName} •{' '}
+                              {formatRange(reservation.date, reservation.endDate)} •{' '}
+                              {reservation.time}
+                            </p>
+                          </div>
+                          <span
+                            className="tint-dot"
+                            style={{
+                              backgroundColor: getCalendarTint(reservation.tintIndex),
+                            }}
+                          />
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyMessage>No upcoming reservations yet.</EmptyMessage>
+                  )}
+                </div>
+              </section>
+            </aside>
+          </div>
         </div>
       </main>
 
@@ -497,6 +515,15 @@ function CalendarCard({
   )
 }
 
+function MetricCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="metric-card">
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  )
+}
+
 function CustomizationModal({
   theme,
   onClose,
@@ -524,45 +551,48 @@ function CustomizationModal({
     value: string,
   ) => void
 }) {
-  const [showAdvanced, setShowAdvanced] = useState(true)
+  const [activePanel, setActivePanel] =
+    useState<'presets' | 'backgrounds' | 'colors'>('presets')
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   return (
     <ModalShell title="Customize Book Nest" onClose={onClose} size="large">
-      <div className="modal-section">
+      <div className="modal-section customization-shell">
         <div className="modal-headline">
           <div>
             <h2 className="modal-title">Customize Book Nest</h2>
-            <p className="modal-copy">Pick a preset or fine-tune every color.</p>
+            <p className="modal-copy">
+              Fast presets, lightweight background previews, and deeper color control
+              when you need it.
+            </p>
           </div>
           <button type="button" className="pill-button" onClick={onClose}>
             Done
           </button>
         </div>
-      </div>
 
-      <div className="modal-section">
-        <h3 className="section-heading">Presets</h3>
-        <div className="preset-grid">
-          {THEME_PRESETS.map((preset) => (
+        <div className="customization-rail">
+          {(['presets', 'backgrounds', 'colors'] as const).map((panel) => (
             <button
-              key={preset.name}
+              key={panel}
               type="button"
-              className={`preset-card${
-                JSON.stringify(preset.theme) === JSON.stringify(theme)
-                  ? ' preset-card--active'
-                  : ''
+              className={`segmented-button${
+                activePanel === panel ? ' segmented-button--active' : ''
               }`}
-              onClick={() => onApplyPreset(preset.name)}
+              onClick={() => setActivePanel(panel)}
             >
-              <ThemePreviewCard theme={preset.theme} />
-              <span>{preset.name}</span>
+              {panel === 'presets'
+                ? 'Presets'
+                : panel === 'backgrounds'
+                  ? 'Backgrounds'
+                  : 'Colors'}
             </button>
           ))}
         </div>
-      </div>
 
-      <div className="modal-section">
-        <div className="quick-actions-row">
+        <ThemePreviewCard theme={theme} tall />
+
+        <div className="quick-actions-row quick-actions-row--compact">
           <button
             type="button"
             className="pill-button"
@@ -574,106 +604,134 @@ function CustomizationModal({
             Reset
           </button>
         </div>
-
-        <label className="toggle-row">
-          <input
-            type="checkbox"
-            checked={showAdvanced}
-            onChange={(event) => setShowAdvanced(event.target.checked)}
-          />
-          <span>Show advanced controls</span>
-        </label>
       </div>
 
-      <div className="modal-section">
-        <h3 className="section-heading">Background Animations</h3>
-        <div className="animation-list">
-          {BACKGROUND_ANIMATION_STYLES.map((style) => (
-            <button
-              key={style.id}
-              type="button"
-              className={`animation-row${
-                theme.animationStyle === style.id ? ' animation-row--active' : ''
-              }`}
-              onClick={() => onSetAnimationStyle(style.id)}
-            >
-              <span className="animation-row__preview">
-                <AnimatedBackdrop
-                  compact
-                  theme={{
-                    ...theme,
-                    animationStyle: style.id,
-                  }}
+      {activePanel === 'presets' ? (
+        <div className="modal-section">
+          <h3 className="section-heading">Presets</h3>
+          <div className="preset-grid">
+            {THEME_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                className={`preset-card${
+                  JSON.stringify(preset.theme) === JSON.stringify(theme)
+                    ? ' preset-card--active'
+                    : ''
+                }`}
+                onClick={() => onApplyPreset(preset.name)}
+              >
+                <ThemePreviewCard theme={preset.theme} />
+                <span>{preset.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {activePanel === 'backgrounds' ? (
+        <div className="modal-section">
+          <h3 className="section-heading">Background Animations</h3>
+          <div className="animation-list">
+            {BACKGROUND_ANIMATION_STYLES.map((style) => (
+              <button
+                key={style.id}
+                type="button"
+                className={`animation-row${
+                  theme.animationStyle === style.id ? ' animation-row--active' : ''
+                }`}
+                onClick={() => onSetAnimationStyle(style.id)}
+              >
+                <span
+                  className="animation-row__preview"
+                  data-style={style.id}
+                  style={
+                    {
+                      '--preview-border-start': theme.borderStart,
+                      '--preview-border-mid': theme.borderMid,
+                      '--preview-border-end': theme.borderEnd,
+                      '--preview-accent': theme.accent,
+                      '--preview-bg-top': theme.backgroundTop,
+                      '--preview-bg-bottom': theme.backgroundBottom,
+                    } as CSSProperties
+                  }
                 />
-              </span>
-              <span className="animation-row__label">{style.label}</span>
-              {theme.animationStyle === style.id ? (
-                <span className="animation-row__status">Selected</span>
-              ) : null}
-            </button>
-          ))}
+                <span className="animation-row__label">{style.label}</span>
+                {theme.animationStyle === style.id ? (
+                  <span className="animation-row__status">Selected</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      <div className="modal-section">
-        <h3 className="section-heading">Customize Colors</h3>
-        <div className="color-grid">
-          <ColorField
-            label="Text"
-            value={theme.text}
-            onChange={(value) => onSetThemeColor('text', value)}
-          />
-          <ColorField
-            label="Accent"
-            value={theme.accent}
-            onChange={(value) => onSetThemeColor('accent', value)}
-          />
-          <ColorField
-            label="Card"
-            value={theme.card}
-            onChange={(value) => onSetThemeColor('card', value)}
-          />
-          <ColorField
-            label="Box"
-            value={theme.box}
-            onChange={(value) => onSetThemeColor('box', value)}
-          />
-          <ColorField
-            label="Background Top"
-            value={theme.backgroundTop}
-            onChange={(value) => onSetThemeColor('backgroundTop', value)}
-          />
-          <ColorField
-            label="Background Bottom"
-            value={theme.backgroundBottom}
-            onChange={(value) => onSetThemeColor('backgroundBottom', value)}
-          />
-          {showAdvanced ? (
-            <>
-              <ColorField
-                label="Border Start"
-                value={theme.borderStart}
-                onChange={(value) => onSetThemeColor('borderStart', value)}
+      {activePanel === 'colors' ? (
+        <div className="modal-section">
+          <div className="section-head">
+            <h3 className="section-heading">Customize Colors</h3>
+            <label className="toggle-row toggle-row--compact">
+              <input
+                type="checkbox"
+                checked={showAdvanced}
+                onChange={(event) => setShowAdvanced(event.target.checked)}
               />
-              <ColorField
-                label="Border Mid"
-                value={theme.borderMid}
-                onChange={(value) => onSetThemeColor('borderMid', value)}
-              />
-              <ColorField
-                label="Border End"
-                value={theme.borderEnd}
-                onChange={(value) => onSetThemeColor('borderEnd', value)}
-              />
-            </>
-          ) : null}
+              <span>Advanced</span>
+            </label>
+          </div>
+          <div className="color-grid">
+            <ColorField
+              label="Text"
+              value={theme.text}
+              onChange={(value) => onSetThemeColor('text', value)}
+            />
+            <ColorField
+              label="Accent"
+              value={theme.accent}
+              onChange={(value) => onSetThemeColor('accent', value)}
+            />
+            <ColorField
+              label="Card"
+              value={theme.card}
+              onChange={(value) => onSetThemeColor('card', value)}
+            />
+            <ColorField
+              label="Box"
+              value={theme.box}
+              onChange={(value) => onSetThemeColor('box', value)}
+            />
+            <ColorField
+              label="Background Top"
+              value={theme.backgroundTop}
+              onChange={(value) => onSetThemeColor('backgroundTop', value)}
+            />
+            <ColorField
+              label="Background Bottom"
+              value={theme.backgroundBottom}
+              onChange={(value) => onSetThemeColor('backgroundBottom', value)}
+            />
+            {showAdvanced ? (
+              <>
+                <ColorField
+                  label="Border Start"
+                  value={theme.borderStart}
+                  onChange={(value) => onSetThemeColor('borderStart', value)}
+                />
+                <ColorField
+                  label="Border Mid"
+                  value={theme.borderMid}
+                  onChange={(value) => onSetThemeColor('borderMid', value)}
+                />
+                <ColorField
+                  label="Border End"
+                  value={theme.borderEnd}
+                  onChange={(value) => onSetThemeColor('borderEnd', value)}
+                />
+              </>
+            ) : null}
+          </div>
         </div>
-      </div>
-
-      <div className="modal-section">
-        <h3 className="section-heading">Preview</h3>
-        <ThemePreviewCard theme={theme} tall />
-      </div>
+      ) : null}
     </ModalShell>
   )
 }
@@ -880,7 +938,7 @@ function ThemePreviewCard({
         '--preview-accent': theme.accent,
       } as CSSProperties}
     >
-      <AnimatedBackdrop theme={theme} compact />
+      <div className="theme-preview-card__wash" />
       <div className="theme-preview-card__content">
         <p>Sample Card</p>
         <small>Buttons, text, and borders preview</small>

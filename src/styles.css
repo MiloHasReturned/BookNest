@@ -19,6 +19,8 @@
   --shadow-strong: 0 24px 70px rgba(15, 20, 31, 0.16);
   --line-soft: color-mix(in oklab, var(--theme-text) 10%, transparent);
   --text-soft: color-mix(in oklab, var(--theme-text) 62%, white 38%);
+  --surface-glass: color-mix(in oklab, var(--theme-card) 78%, transparent);
+  --surface-raised: color-mix(in oklab, var(--theme-box) 88%, white 12%);
 }
 
 * {
@@ -170,23 +172,24 @@ textarea {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 1rem;
+  gap: 1.05rem;
 }
 
 .book-card,
 .island-shell {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 28px;
+  border: 1px solid color-mix(in oklab, white 48%, var(--theme-border-mid) 20%);
+  border-radius: 30px;
   background:
+    radial-gradient(circle at 0% 0%, color-mix(in oklab, white 18%, transparent), transparent 34%),
     linear-gradient(
       180deg,
-      color-mix(in oklab, var(--theme-card) 88%, white 12%),
-      color-mix(in oklab, var(--theme-card) 94%, transparent)
+      color-mix(in oklab, var(--theme-card) 82%, white 18%),
+      color-mix(in oklab, var(--theme-card) 90%, transparent)
     );
   box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(22px) saturate(1.05);
 }
 
 .book-card::before,
@@ -210,7 +213,7 @@ textarea {
 }
 
 .book-card {
-  padding: 1.2rem;
+  padding: clamp(1rem, 2vw, 1.45rem);
 }
 
 .cloud-status-card {
@@ -218,16 +221,19 @@ textarea {
 }
 
 .book-card--hero {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   justify-content: space-between;
-  gap: 1rem;
-  align-items: start;
+  gap: 1.5rem;
+  align-items: stretch;
 }
 
 .book-hero-title,
 .display-title {
   margin: 0;
-  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  font-weight: 500;
+  letter-spacing: -0.06em;
   line-height: 1.05;
 }
 
@@ -235,8 +241,84 @@ textarea {
   margin: 0.65rem 0 0;
   max-width: 40rem;
   color: var(--text-soft);
-  font-size: 1rem;
+  font-size: clamp(1rem, 2vw, 1.22rem);
   line-height: 1.6;
+}
+
+.section-eyebrow {
+  margin: 0 0 0.55rem;
+  color: color-mix(in oklab, var(--theme-accent) 62%, var(--theme-text));
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  max-width: 560px;
+}
+
+.hero-actions .action-button {
+  width: auto;
+  min-width: 190px;
+}
+
+.hero-panel {
+  display: grid;
+  justify-items: end;
+  align-content: space-between;
+  gap: 1rem;
+  min-width: 260px;
+}
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  gap: 0.65rem;
+}
+
+.metric-card {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 76px;
+  border: 1px solid var(--line-soft);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--theme-box) 70%, transparent);
+  padding: 0.85rem;
+  text-align: center;
+}
+
+.metric-card strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.metric-card span {
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 1.05rem;
+  align-items: start;
+}
+
+.dashboard-main,
+.dashboard-side {
+  display: grid;
+  gap: 1.05rem;
+}
+
+.dashboard-side {
+  position: sticky;
+  top: 6.5rem;
 }
 
 .icon-chip,
@@ -273,6 +355,12 @@ textarea {
   color: var(--theme-text);
 }
 
+.icon-chip--large {
+  width: 58px;
+  height: 58px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, white 24%, transparent);
+}
+
 .icon-chip--accent {
   background: linear-gradient(
     135deg,
@@ -301,11 +389,14 @@ textarea {
   gap: 0.65rem;
   width: 100%;
   border: 1px solid var(--line-soft);
-  border-radius: 18px;
-  background: color-mix(in oklab, var(--theme-box) 88%, white 12%);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 18%, transparent), transparent),
+    color-mix(in oklab, var(--theme-box) 88%, white 12%);
   color: var(--theme-text);
   padding: 0.95rem 1rem;
   font-weight: 700;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, white 18%, transparent);
 }
 
 .action-button--primary {
@@ -320,6 +411,11 @@ textarea {
   display: flex;
   align-items: center;
   gap: 0.9rem;
+}
+
+.account-row--stacked {
+  align-items: start;
+  flex-wrap: wrap;
 }
 
 .account-details {
@@ -465,8 +561,9 @@ textarea {
 .section-heading,
 .modal-title {
   margin: 0;
-  font-size: 1.08rem;
-  font-weight: 700;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .section-heading--small {
@@ -484,6 +581,11 @@ textarea {
   background: color-mix(in oklab, var(--theme-box) 90%, white 10%);
   padding: 0.85rem 0.95rem;
   color: var(--text-soft);
+}
+
+.search-shell--compact {
+  min-width: min(260px, 100%);
+  padding: 0.7rem 0.85rem;
 }
 
 .search-shell input,
@@ -512,8 +614,27 @@ textarea {
   gap: 0.85rem;
   border: 1px solid var(--line-soft);
   border-radius: 18px;
-  background: color-mix(in oklab, var(--theme-box) 90%, white 10%);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 16%, transparent), transparent),
+    color-mix(in oklab, var(--theme-box) 90%, white 10%);
   padding: 0.85rem;
+}
+
+.box-row--interactive,
+.calendar-card {
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.box-row--interactive:hover,
+.calendar-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--theme-accent) 54%, var(--line-soft));
+  box-shadow: 0 14px 34px color-mix(in oklab, var(--theme-text) 10%, transparent);
+}
+
+.box-row--stacked {
+  align-items: start;
+  flex-wrap: wrap;
 }
 
 .box-row--interactive {
@@ -562,9 +683,16 @@ textarea {
   gap: 0.55rem;
 }
 
+.calendar-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+}
+
 .calendar-card {
   align-items: center;
   color: inherit;
+  min-height: 118px;
 }
 
 .calendar-mini {
@@ -616,6 +744,7 @@ textarea {
 .calendar-card-action {
   justify-self: end;
   color: var(--text-soft);
+  padding-inline: 0.4rem;
 }
 
 .calendar-card-action--danger {
@@ -647,11 +776,12 @@ textarea {
       color-mix(in oklab, var(--theme-card) 96%, transparent)
     );
   box-shadow: var(--shadow-strong);
-  padding: 1.4rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  scrollbar-width: thin;
 }
 
 .modal-shell--large {
-  width: min(960px, 100%);
+  width: min(1040px, 100%);
 }
 
 .modal-close {
@@ -673,6 +803,37 @@ textarea {
 .modal-section {
   display: grid;
   gap: 1rem;
+}
+
+.customization-shell {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  align-items: start;
+}
+
+.customization-shell .modal-headline {
+  grid-column: 1 / -1;
+}
+
+.customization-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.segmented-button {
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--theme-box) 72%, transparent);
+  color: var(--text-soft);
+  padding: 0.62rem 0.85rem;
+  font-weight: 800;
+}
+
+.segmented-button--active {
+  border-color: color-mix(in oklab, var(--theme-accent) 62%, var(--theme-border-end));
+  background: color-mix(in oklab, var(--theme-accent) 24%, var(--theme-box));
+  color: var(--theme-text);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--theme-accent) 12%, transparent);
 }
 
 .modal-headline {
@@ -736,6 +897,11 @@ textarea {
   align-items: center;
 }
 
+.quick-actions-row--compact {
+  justify-content: start;
+  flex-wrap: wrap;
+}
+
 .pill-button {
   display: inline-flex;
   align-items: center;
@@ -759,6 +925,10 @@ textarea {
   font-weight: 600;
 }
 
+.toggle-row--compact {
+  justify-content: end;
+}
+
 .toggle-row input {
   width: auto;
 }
@@ -769,16 +939,20 @@ textarea {
   gap: 0.75rem;
 }
 
+.animation-list {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .animation-row {
   display: flex;
   justify-content: flex-start;
   gap: 1rem;
   align-items: center;
   border: 1px solid var(--line-soft);
-  border-radius: 18px;
+  border-radius: 20px;
   background: color-mix(in oklab, var(--theme-box) 88%, white 12%);
   color: var(--theme-text);
-  padding: 0.85rem 0.95rem;
+  padding: 0.72rem 0.8rem;
   overflow: hidden;
 }
 
@@ -792,6 +966,61 @@ textarea {
   border-radius: 16px;
   background: var(--theme-bg-bottom);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, white 18%, transparent);
+}
+
+.animation-row__preview::before,
+.animation-row__preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.animation-row__preview::before {
+  background:
+    radial-gradient(circle at 20% 25%, var(--preview-border-start), transparent 34%),
+    radial-gradient(circle at 78% 22%, var(--preview-border-end), transparent 32%),
+    linear-gradient(135deg, var(--preview-bg-top), var(--preview-bg-bottom));
+}
+
+.animation-row__preview::after {
+  opacity: 0.45;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.32) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.animation-row__preview[data-style="neonPulse"]::before,
+.animation-row__preview[data-style="hologramMesh"]::before,
+.animation-row__preview[data-style="quantumGrid"]::before,
+.animation-row__preview[data-style="monsoonMatrix"]::before {
+  background:
+    radial-gradient(circle at 20% 30%, #46c8ff, transparent 35%),
+    radial-gradient(circle at 80% 35%, #ff40dc, transparent 34%),
+    linear-gradient(135deg, #07112f, #061d27);
+}
+
+.animation-row__preview[data-style="mandelbloom"]::before,
+.animation-row__preview[data-style="crystalFractal"]::before,
+.animation-row__preview[data-style="kaleidoscope"]::before {
+  background:
+    conic-gradient(from 45deg, var(--preview-border-start), var(--preview-border-mid), var(--preview-border-end), var(--preview-accent), var(--preview-border-start));
+}
+
+.animation-row__preview[data-style="editorialPaper"]::before,
+.animation-row__preview[data-style="executiveMist"]::before,
+.animation-row__preview[data-style="graphiteHalo"]::before {
+  background:
+    radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.72), transparent 30%),
+    linear-gradient(135deg, #fbf5e8, #dfe9f0 54%, #111823);
+}
+
+.animation-row__preview[data-style="sunsetWave"]::before,
+.animation-row__preview[data-style="emberGlow"]::before,
+.animation-row__preview[data-style="peachDrift"]::before {
+  background:
+    radial-gradient(circle at 50% 100%, #ff7e35, transparent 44%),
+    linear-gradient(135deg, #ffcc8a, #e86f74 54%, #314a84);
 }
 
 .animation-row__label {
@@ -859,6 +1088,17 @@ textarea {
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   mask-composite: exclude;
+}
+
+.theme-preview-card__wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, var(--preview-border-start), transparent 34%),
+    radial-gradient(circle at 82% 22%, var(--preview-border-end), transparent 32%),
+    radial-gradient(circle at 48% 88%, var(--preview-border-mid), transparent 40%),
+    linear-gradient(135deg, var(--preview-card), var(--preview-box));
+  opacity: 0.72;
 }
 
 .theme-preview-card__content {
@@ -957,14 +1197,25 @@ textarea {
   place-items: center;
   gap: 0.35rem;
   min-height: 66px;
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in oklab, var(--theme-text) 7%, transparent);
   border-radius: 18px;
-  background: transparent;
+  background: color-mix(in oklab, var(--theme-box) 42%, transparent);
   color: var(--theme-text);
+  transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.calendar-day:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--theme-accent) 42%, var(--line-soft));
+  background: color-mix(in oklab, var(--theme-box) 74%, white 8%);
 }
 
 .calendar-day--selected {
-  background: color-mix(in oklab, var(--theme-border-mid) 54%, white 46%);
+  border-color: color-mix(in oklab, var(--theme-accent) 72%, var(--theme-border-end));
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in oklab, white 24%, transparent), transparent 50%),
+    color-mix(in oklab, var(--theme-border-mid) 54%, white 46%);
+  box-shadow: 0 10px 28px color-mix(in oklab, var(--theme-accent) 16%, transparent);
 }
 
 .calendar-day--empty {
@@ -995,6 +1246,7 @@ textarea {
 
 .book-textarea {
   min-height: 110px;
+  line-height: 1.55;
 }
 
 .two-up-grid {
@@ -1023,6 +1275,7 @@ textarea {
   border-radius: 22px;
   background: color-mix(in oklab, var(--theme-box) 90%, white 10%);
   padding: 0.95rem;
+  scrollbar-width: thin;
 }
 
 .chat-row {
@@ -1035,7 +1288,9 @@ textarea {
   flex: 1;
   border: 1px solid var(--line-soft);
   border-radius: 18px;
-  background: color-mix(in oklab, var(--theme-card) 88%, white 12%);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 18%, transparent), transparent),
+    color-mix(in oklab, var(--theme-card) 88%, white 12%);
   padding: 0.85rem;
 }
 
@@ -1892,12 +2147,28 @@ textarea {
   .site-footer__inner,
   .account-row,
   .modal-headline,
+  .book-card--hero,
   .calendar-detail-header,
   .quick-actions-row,
   .day-details-header,
   .chat-compose {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .book-card--hero,
+  .dashboard-layout,
+  .customization-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-panel {
+    justify-items: stretch;
+    min-width: 0;
+  }
+
+  .dashboard-side {
+    position: static;
   }
 
   .site-header__links {
@@ -1914,6 +2185,10 @@ textarea {
   .calendar-card {
     align-items: start;
   }
+
+  .search-shell--compact {
+    min-width: 100%;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1927,6 +2202,22 @@ textarea {
     border-radius: 24px;
   }
 
+  .book-hero-title {
+    font-size: clamp(2.35rem, 14vw, 3.4rem);
+  }
+
+  .hero-actions,
+  .dashboard-metrics,
+  .section-head,
+  .customization-rail {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions .action-button {
+    width: 100%;
+  }
+
   .calendar-weekdays,
   .calendar-grid {
     gap: 0.35rem;
@@ -1935,6 +2226,12 @@ textarea {
   .calendar-day {
     min-height: 58px;
     border-radius: 16px;
+  }
+
+  .animation-list,
+  .calendar-card-grid,
+  .preset-grid {
+    grid-template-columns: 1fr;
   }
 
   .box-row,
