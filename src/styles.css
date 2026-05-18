@@ -664,6 +664,224 @@ textarea {
   top: 6.5rem;
 }
 
+.pre-account-shell {
+  gap: 1.15rem;
+}
+
+.pre-account-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  align-items: center;
+  gap: clamp(1.4rem, 4vw, 3rem);
+  min-height: min(680px, calc(100vh - 9rem));
+  padding: clamp(1.35rem, 4vw, 3rem);
+}
+
+.pre-account-title {
+  max-width: 860px;
+  margin: 0;
+  font-size: clamp(3rem, 7vw, 6.6rem);
+  font-weight: 500;
+  letter-spacing: -0.075em;
+  line-height: 0.92;
+}
+
+.pre-account-hero .google-auth-panel {
+  min-width: min(360px, 100%);
+}
+
+.pre-account-hero .text-button {
+  align-self: center;
+}
+
+.pre-account-invite-callout {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  max-width: 680px;
+  margin-top: 1rem;
+  border: 1px solid color-mix(in oklab, var(--theme-accent) 44%, var(--line-soft));
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in oklab, var(--theme-accent) 28%, transparent), transparent 45%),
+    color-mix(in oklab, var(--theme-box) 78%, transparent);
+  padding: 0.95rem 1rem;
+  color: var(--theme-text);
+  font-weight: 700;
+}
+
+.pre-account-showcase {
+  position: relative;
+  min-height: 440px;
+}
+
+.showcase-card {
+  position: absolute;
+  border: 1px solid color-mix(in oklab, white 48%, var(--theme-border-end) 26%);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, color-mix(in oklab, var(--theme-card) 84%, transparent), color-mix(in oklab, var(--theme-box) 78%, transparent)),
+    color-mix(in oklab, var(--theme-card) 70%, transparent);
+  box-shadow: 0 22px 56px color-mix(in oklab, var(--theme-text) 16%, transparent);
+  backdrop-filter: blur(24px);
+}
+
+.showcase-card--calendar {
+  inset: 2rem 2rem auto 0;
+  padding: 1.15rem;
+}
+
+.showcase-card--chat {
+  right: 0;
+  bottom: 4.4rem;
+  display: grid;
+  gap: 0.5rem;
+  width: min(260px, 70%);
+  padding: 1rem;
+  transform: rotate(3deg);
+}
+
+.showcase-card--invite {
+  left: 1.5rem;
+  bottom: 0.8rem;
+  display: grid;
+  gap: 0.35rem;
+  width: min(260px, 72%);
+  padding: 1rem;
+  transform: rotate(-4deg);
+}
+
+.showcase-card--chat span,
+.showcase-card--invite span {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.showcase-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.showcase-card__top span {
+  color: var(--text-soft);
+}
+
+.showcase-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.showcase-calendar-grid span {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--theme-text) 8%, transparent);
+}
+
+.showcase-calendar-grid__reserved {
+  background: linear-gradient(135deg, var(--theme-border-start), var(--theme-accent)) !important;
+  box-shadow: 0 0 22px color-mix(in oklab, var(--theme-accent) 34%, transparent);
+}
+
+.showcase-pill {
+  justify-self: start;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--theme-accent) 22%, transparent);
+  color: var(--theme-text) !important;
+  padding: 0.35rem 0.65rem;
+  font-weight: 800;
+}
+
+.pre-account-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.05rem;
+}
+
+.pre-account-feature {
+  display: grid;
+  gap: 0.8rem;
+  min-height: 230px;
+}
+
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid color-mix(in oklab, var(--theme-accent) 42%, var(--line-soft));
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--theme-accent) 18%, var(--theme-box));
+  color: var(--theme-text);
+}
+
+.pre-account-how,
+.pre-account-trust {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.how-step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.how-step {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 22px;
+  background: color-mix(in oklab, var(--theme-box) 78%, transparent);
+  padding: 1rem;
+}
+
+.how-step span {
+  color: color-mix(in oklab, var(--theme-accent) 70%, var(--theme-text));
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.how-step strong {
+  font-size: 1rem;
+}
+
+.how-step p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+.trust-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.trust-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  border: 1px solid var(--line-soft);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--theme-box) 74%, transparent);
+  padding: 0.85rem;
+}
+
+.trust-item span {
+  display: inline-flex;
+  color: color-mix(in oklab, var(--theme-accent) 70%, var(--theme-text));
+}
+
+.trust-item p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
 .icon-chip,
 .pill-button,
 .action-button,
@@ -3080,9 +3298,20 @@ textarea {
   }
 
   .book-card--hero,
+  .pre-account-hero,
+  .pre-account-grid,
+  .how-step-grid,
   .dashboard-layout,
   .customization-shell {
     grid-template-columns: 1fr;
+  }
+
+  .pre-account-hero {
+    min-height: auto;
+  }
+
+  .pre-account-showcase {
+    min-height: 360px;
   }
 
   .hero-panel {
@@ -3153,8 +3382,32 @@ textarea {
 
   .animation-list,
   .calendar-card-grid,
+  .pre-account-grid,
+  .how-step-grid,
   .preset-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pre-account-title {
+    font-size: clamp(2.75rem, 16vw, 4.2rem);
+  }
+
+  .pre-account-showcase {
+    min-height: 300px;
+  }
+
+  .showcase-card--calendar {
+    inset: 1rem 0 auto;
+  }
+
+  .showcase-card--chat {
+    bottom: 3.2rem;
+    width: 74%;
+  }
+
+  .showcase-card--invite {
+    left: 0;
+    width: 76%;
   }
 
   .box-row,

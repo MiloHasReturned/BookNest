@@ -1,13 +1,19 @@
 import { Link } from '@tanstack/react-router'
 import {
   CalendarPlus2,
+  CalendarDays,
   ChevronRight,
+  Cloud,
   LogOut,
   Mail,
+  MessageCircle,
   Search,
+  ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
   UserPlus2,
+  UsersRound,
   X,
 } from 'lucide-react'
 import {
@@ -124,6 +130,53 @@ export function BookNestDashboard() {
 
   if (isBooting) {
     return <BookNestLoadingScreen theme={snapshot.theme} />
+  }
+
+  if (!snapshot.accountProfile) {
+    return (
+      <>
+        <main className="booknest-screen">
+          <AnimatedBackdrop theme={snapshot.theme} />
+
+          <div className="page-wrap booknest-app-shell pre-account-shell">
+            <PreAccountLanding
+              inviteCount={snapshot.invites.length}
+              onCreateAccount={() => setShowAccountEditor(true)}
+              onCustomize={() => setShowCustomization(true)}
+              onGoogleSignIn={(profile) => {
+                saveAccountProfile(profile)
+              }}
+            />
+          </div>
+        </main>
+
+        {showCustomization ? (
+          <CustomizationModal
+            theme={snapshot.theme}
+            onClose={() => setShowCustomization(false)}
+            onApplyPreset={applyPreset}
+            onResetTheme={resetTheme}
+            onSetAnimationStyle={setAnimationStyle}
+            onSetThemeColor={setThemeColor}
+          />
+        ) : null}
+
+        {showAccountEditor ? (
+          <AccountModal
+            profile={snapshot.accountProfile}
+            onClose={() => setShowAccountEditor(false)}
+            onSave={(profile) => {
+              saveAccountProfile(profile)
+              setShowAccountEditor(false)
+            }}
+            onGoogleSignIn={(profile) => {
+              saveAccountProfile(profile)
+              setShowAccountEditor(false)
+            }}
+          />
+        ) : null}
+      </>
+    )
   }
 
   return (
@@ -465,6 +518,186 @@ export function BookNestDashboard() {
         />
       ) : null}
     </>
+  )
+}
+
+function PreAccountLanding({
+  inviteCount,
+  onCreateAccount,
+  onCustomize,
+  onGoogleSignIn,
+}: {
+  inviteCount: number
+  onCreateAccount: () => void
+  onCustomize: () => void
+  onGoogleSignIn: (profile: AccountProfile) => void
+}) {
+  return (
+    <>
+      <section className="book-card pre-account-hero rise-in">
+        <div className="pre-account-hero__copy">
+          <p className="section-eyebrow">Group calendars without the chaos</p>
+          <h1 className="pre-account-title">Book shared time, talk plans through, and keep everyone synced.</h1>
+          <p className="book-hero-copy">
+            BookNest is a shared planning space for families, friends, crews, clubs,
+            rentals, boats, cabins, studios, and any group that needs fair access to
+            shared time. Create calendars, invite people, reserve dates, leave day
+            notes, and chat in the same place.
+          </p>
+
+          {inviteCount ? (
+            <div className="pre-account-invite-callout">
+              <Mail size={18} />
+              <span>
+                You have {inviteCount} pending invite{inviteCount === 1 ? '' : 's'} waiting.
+                Sign in with the invited Google email to accept shared calendars.
+              </span>
+            </div>
+          ) : null}
+
+          <div className="hero-actions">
+            <GoogleSignInButton onSignIn={onGoogleSignIn} />
+            <button
+              type="button"
+              className="action-button"
+              onClick={onCreateAccount}
+            >
+              <UserPlus2 size={16} />
+              <span>Create manually</span>
+            </button>
+            <button type="button" className="text-button" onClick={onCustomize}>
+              <SlidersHorizontal size={15} />
+              Preview customization
+            </button>
+          </div>
+        </div>
+
+        <div className="pre-account-showcase" aria-hidden="true">
+          <div className="showcase-card showcase-card--calendar">
+            <div className="showcase-card__top">
+              <span>May</span>
+              <strong>Shared Cabin</strong>
+            </div>
+            <div className="showcase-calendar-grid">
+              {Array.from({ length: 28 }).map((_, index) => (
+                <span
+                  key={index}
+                  className={
+                    index === 7 || index === 8 || index === 17
+                      ? 'showcase-calendar-grid__reserved'
+                      : ''
+                  }
+                />
+              ))}
+            </div>
+          </div>
+          <div className="showcase-card showcase-card--chat">
+            <strong>Chat</strong>
+            <span>Maxi reserved Sat-Sun</span>
+            <span>Bring keys?</span>
+            <span className="showcase-pill">Synced</span>
+          </div>
+          <div className="showcase-card showcase-card--invite">
+            <UsersRound size={18} />
+            <strong>Invite by email</strong>
+            <span>Appears when they sign in</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="pre-account-grid">
+        <FeatureExplainer
+          icon={<CalendarDays size={20} />}
+          title="Create purpose-built calendars"
+          copy="Make a calendar for a cabin, boat, family schedule, study group, workplace resource, room, equipment booking, or recurring crew plan."
+        />
+        <FeatureExplainer
+          icon={<UsersRound size={20} />}
+          title="Invite the actual people involved"
+          copy="Send invites by email so shared calendars appear for the recipient when they sign in with their Google account."
+        />
+        <FeatureExplainer
+          icon={<MessageCircle size={20} />}
+          title="Keep the conversation beside the schedule"
+          copy="Each calendar includes chat, replies, reactions, reservations, and day notes so decisions do not get lost in separate apps."
+        />
+        <FeatureExplainer
+          icon={<Cloud size={20} />}
+          title="Sync across devices"
+          copy="Signed-in accounts use cloud storage, so calendars can follow people across laptops, phones, browsers, and shared devices."
+        />
+      </section>
+
+      <section className="book-card pre-account-how rise-in" style={{ animationDelay: '120ms' }}>
+        <div>
+          <p className="section-eyebrow">How it works</p>
+          <h2 className="section-heading">From idea to shared calendar in minutes</h2>
+        </div>
+        <div className="how-step-grid">
+          <HowStep number="01" title="Sign in" copy="Use Google so BookNest knows which calendars, invites, and memberships belong to you." />
+          <HowStep number="02" title="Create a calendar" copy="Name the shared thing: a cabin, boat, room, schedule, club plan, or family calendar." />
+          <HowStep number="03" title="Invite people" copy="Enter their email. When they sign in with that Google email, the invite appears in BookNest." />
+          <HowStep number="04" title="Reserve, note, chat" copy="Add reservations, day notes, and messages so the whole group sees the same plan." />
+        </div>
+      </section>
+
+      <section className="book-card pre-account-trust rise-in" style={{ animationDelay: '170ms' }}>
+        <div>
+          <p className="section-eyebrow">Built for the web app we are making</p>
+          <h2 className="section-heading">What BookNest is aiming to solve</h2>
+        </div>
+        <div className="trust-list">
+          <TrustItem icon={<ShieldCheck size={18} />} text="Reduce accidental double-bookings by putting reservations in one shared place." />
+          <TrustItem icon={<Sparkles size={18} />} text="Make the app feel personal with themes, backgrounds, and cleaner customization." />
+          <TrustItem icon={<Cloud size={18} />} text="Use cloud sync and diagnostics so issues are visible instead of silently breaking." />
+        </div>
+      </section>
+    </>
+  )
+}
+
+function FeatureExplainer({
+  icon,
+  title,
+  copy,
+}: {
+  icon: ReactNode
+  title: string
+  copy: string
+}) {
+  return (
+    <article className="book-card pre-account-feature rise-in">
+      <div className="feature-icon">{icon}</div>
+      <h2 className="section-heading">{title}</h2>
+      <p className="account-meta">{copy}</p>
+    </article>
+  )
+}
+
+function HowStep({
+  number,
+  title,
+  copy,
+}: {
+  number: string
+  title: string
+  copy: string
+}) {
+  return (
+    <article className="how-step">
+      <span>{number}</span>
+      <strong>{title}</strong>
+      <p>{copy}</p>
+    </article>
+  )
+}
+
+function TrustItem({ icon, text }: { icon: ReactNode; text: string }) {
+  return (
+    <div className="trust-item">
+      <span>{icon}</span>
+      <p>{text}</p>
+    </div>
   )
 }
 
