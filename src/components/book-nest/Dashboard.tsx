@@ -31,6 +31,7 @@ import {
   formatRange,
   getCalendarTint,
 } from '#/lib/booknest'
+import { type CloudIssue, isCleanableCloudIssue } from '#/lib/cloudDiagnostics'
 import { parseCalendarInviteParam } from '#/lib/inviteLinks'
 
 export function BookNestDashboard() {
@@ -42,6 +43,7 @@ export function BookNestDashboard() {
     clearInvites,
     clearBrokenCloudCalendars,
     cloudError,
+    cloudIssue,
     cloudStatus,
     createCalendar,
     createInvite,
@@ -68,7 +70,7 @@ export function BookNestDashboard() {
   const invitedCalendars = snapshot.invitedCalendars.filter((calendar) =>
     !searchValue ? true : calendar.name.toLowerCase().includes(searchValue),
   )
-  const canCleanCloudError = isCleanableCloudError(cloudError)
+  const canCleanCloudError = isCleanableCloudIssue(cloudIssue)
   const totalCalendars = snapshot.calendars.length + snapshot.invitedCalendars.length
 
   useEffect(() => {
@@ -170,6 +172,7 @@ export function BookNestDashboard() {
               <div className="section-stack">
                 <h2 className="section-heading">Cloud Sync Needs Attention</h2>
                 <p className="account-meta">{cloudError}</p>
+                <CloudIssueDetails issue={cloudIssue} />
                 <button
                   type="button"
                   className="pill-button"
@@ -1004,12 +1007,42 @@ function EmptyMessage({ children }: { children: ReactNode }) {
   return <div className="empty-state">{children}</div>
 }
 
-function isCleanableCloudError(error: string | null) {
-  if (!error) {
-    return false
+function CloudIssueDetails({ issue }: { issue: CloudIssue | null }) {
+  if (!issue) {
+    return null
   }
 
-  return /broken|foreign key|calendar-not-found|not present in table/i.test(error)
+  return (
+    <details className="debug-details">
+      <summary>Debug details</summary>
+      <dl>
+        <div>
+          <dt>Where</dt>
+          <dd>{issue.operation}</dd>
+        </div>
+        <div>
+          <dt>Source</dt>
+          <dd>{issue.area}</dd>
+        </div>
+        <div>
+          <dt>Likely cause</dt>
+          <dd>{issue.likelyCause}</dd>
+        </div>
+        <div>
+          <dt>Next step</dt>
+          <dd>{issue.nextStep}</dd>
+        </div>
+        <div>
+          <dt>Raw error</dt>
+          <dd>{issue.rawMessage}</dd>
+        </div>
+        <div>
+          <dt>Time</dt>
+          <dd>{issue.timestamp}</dd>
+        </div>
+      </dl>
+    </details>
+  )
 }
 
 async function readFileAsDataUrl(file: File) {

@@ -33,6 +33,7 @@ import {
   resolvedEndDate,
   weekdaySymbols,
 } from '#/lib/booknest'
+import { type CloudIssue, isCleanableCloudIssue } from '#/lib/cloudDiagnostics'
 import { createCloudCalendarInvite } from '#/lib/booknestCloud'
 import { readGoogleIdToken } from '#/lib/googleSession'
 import { createCalendarInviteUrl } from '#/lib/inviteLinks'
@@ -49,6 +50,7 @@ export function BookNestCalendarDetail({
     addReaction,
     clearBrokenCloudCalendars,
     cloudError,
+    cloudIssue,
     cloudStatus,
     dismissCloudError,
     refreshCloudData,
@@ -78,7 +80,7 @@ export function BookNestCalendarDetail({
   const reservations = snapshot.reservationsByCalendar[calendarId] ?? []
   const messages = snapshot.chatByCalendar[calendarId] ?? []
   const dayNotes = snapshot.dayNotesByCalendar[calendarId] ?? {}
-  const canCleanCloudError = isCleanableCloudError(cloudError)
+  const canCleanCloudError = isCleanableCloudIssue(cloudIssue)
 
   useEffect(() => {
     if (endDate < selectedDate) {
@@ -146,6 +148,7 @@ export function BookNestCalendarDetail({
                 <div>
                   <h2 className="section-heading">Cloud Sync Needs Attention</h2>
                   <p className="account-meta">{cloudError}</p>
+                  <CloudIssueDetails issue={cloudIssue} />
                 </div>
                 <button
                   type="button"
@@ -815,12 +818,42 @@ function Avatar({
   )
 }
 
-function isCleanableCloudError(error: string | null) {
-  if (!error) {
-    return false
+function CloudIssueDetails({ issue }: { issue: CloudIssue | null }) {
+  if (!issue) {
+    return null
   }
 
-  return /broken|foreign key|calendar-not-found|not present in table/i.test(error)
+  return (
+    <details className="debug-details">
+      <summary>Debug details</summary>
+      <dl>
+        <div>
+          <dt>Where</dt>
+          <dd>{issue.operation}</dd>
+        </div>
+        <div>
+          <dt>Source</dt>
+          <dd>{issue.area}</dd>
+        </div>
+        <div>
+          <dt>Likely cause</dt>
+          <dd>{issue.likelyCause}</dd>
+        </div>
+        <div>
+          <dt>Next step</dt>
+          <dd>{issue.nextStep}</dd>
+        </div>
+        <div>
+          <dt>Raw error</dt>
+          <dd>{issue.rawMessage}</dd>
+        </div>
+        <div>
+          <dt>Time</dt>
+          <dd>{issue.timestamp}</dd>
+        </div>
+      </dl>
+    </details>
+  )
 }
 
 function formatDateForInput(date: Date) {

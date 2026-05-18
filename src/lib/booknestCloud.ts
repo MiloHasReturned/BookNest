@@ -9,6 +9,7 @@ import {
   DEFAULT_THEME,
   normalizeSnapshot,
 } from '#/lib/booknest'
+import { errorMessage } from '#/lib/cloudDiagnostics'
 
 type GoogleTokenInfo = {
   aud?: string
@@ -380,7 +381,14 @@ function supabaseConfig() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !serviceRoleKey) {
-    throw new Error('Supabase backend is not configured.')
+    const missing = [
+      !url ? 'SUPABASE_URL' : null,
+      !serviceRoleKey ? 'SUPABASE_SERVICE_ROLE_KEY' : null,
+    ]
+      .filter(Boolean)
+      .join(', ')
+
+    throw new Error(`Supabase backend is not configured. Missing env var(s): ${missing}.`)
   }
 
   return {
@@ -390,12 +398,25 @@ function supabaseConfig() {
 }
 
 async function verifyGoogleIdToken(idToken: string) {
-  const response = await fetch(
-    `${GOOGLE_TOKENINFO_URL}?id_token=${encodeURIComponent(idToken)}`,
-  )
+  let response: Response
+
+  try {
+    response = await fetch(
+      `${GOOGLE_TOKENINFO_URL}?id_token=${encodeURIComponent(idToken)}`,
+    )
+  } catch (error) {
+    throw new Error(
+      `Google token verification request failed: ${errorMessage(
+        error,
+        'Network request failed.',
+      )}`,
+    )
+  }
 
   if (!response.ok) {
-    throw new Error('Google sign-in expired. Please sign in again.')
+    throw new Error(
+      `Google sign-in expired or was rejected. Tokeninfo status: ${response.status}.`,
+    )
   }
 
   const tokenInfo = (await response.json()) as GoogleTokenInfo
@@ -403,11 +424,15 @@ async function verifyGoogleIdToken(idToken: string) {
     process.env.GOOGLE_CLIENT_ID ?? process.env.VITE_GOOGLE_CLIENT_ID
 
   if (expectedAudience && tokenInfo.aud !== expectedAudience) {
-    throw new Error('Google token audience does not match this app.')
+    throw new Error(
+      `Google token audience does not match this app. Expected GOOGLE_CLIENT_ID/VITE_GOOGLE_CLIENT_ID audience ${expectedAudience}, received ${
+        tokenInfo.aud ?? 'none'
+      }.`,
+    )
   }
 
   if (!tokenInfo.email || tokenInfo.email_verified === 'false') {
-    throw new Error('Google account email is not verified.')
+    throw new Error('Google account email is not verified or tokeninfo omitted email.')
   }
 
   return {
@@ -423,19 +448,34 @@ async function supabaseRequest<T>(
   init: RequestInit & { allowEmpty?: boolean } = {},
 ) {
   const { url, serviceRoleKey } = supabaseConfig()
-  const response = await fetch(`${url}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: serviceRoleKey,
-      authorization: `Bearer ${serviceRoleKey}`,
-      'content-type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  })
+  const endpoint = `${url}/rest/v1/${path}`
+  const operation = `${init.method ?? 'GET'} ${path.split('?')[0]}`
+  let response: Response
+
+  try {
+    response = await fetch(endpoint, {
+      ...init,
+      headers: {
+        apikey: serviceRoleKey,
+        authorization: `Bearer ${serviceRoleKey}`,
+        'content-type': 'application/json',
+        ...(init.headers ?? {}),
+      },
+    })
+  } catch (error) {
+    throw new Error(
+      `Supabase network request failed for ${operation}: ${errorMessage(
+        error,
+        'Network request failed.',
+      )}`,
+    )
+  }
 
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error(`Supabase request failed: ${response.status} ${detail}`)
+    throw new Error(
+      `Supabase request failed for ${operation}: ${response.status} ${detail}`,
+    )
   }
 
   if (response.status === 204 || init.allowEmpty) {

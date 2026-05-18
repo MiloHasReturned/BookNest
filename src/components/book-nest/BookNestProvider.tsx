@@ -32,12 +32,19 @@ import {
   loadCloudSnapshot,
   saveCloudSnapshot,
 } from '#/lib/booknestCloud'
+import {
+  type CloudIssue,
+  type CloudOperation,
+  createCloudIssue,
+  isTransientFetchError,
+} from '#/lib/cloudDiagnostics'
 import { clearGoogleSession, readGoogleIdToken } from '#/lib/googleSession'
 
 type BookNestContextValue = {
   snapshot: BookNestSnapshot
   cloudStatus: 'local' | 'syncing' | 'synced' | 'error'
   cloudError: string | null
+  cloudIssue: CloudIssue | null
   refreshCloudData: (options?: { silent?: boolean }) => Promise<void>
   syncCloudData: () => Promise<boolean>
   dismissCloudError: () => void
@@ -95,6 +102,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   const [cloudStatus, setCloudStatus] =
     useState<BookNestContextValue['cloudStatus']>('local')
   const [cloudError, setCloudError] = useState<string | null>(null)
+  const [cloudIssue, setCloudIssue] = useState<CloudIssue | null>(null)
   const cloudSaveErrorLogged = useRef(false)
   const cloudLoadFailureCount = useRef(0)
   const cloudErrorDismissedUntil = useRef(0)
@@ -108,20 +116,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     cloudLoadFailureCount.current = 0
     setCloudStatus(nextStatus)
     setCloudError(null)
-  }
-
-  function errorMessage(error: unknown, fallback: string) {
-    return error instanceof Error ? error.message : fallback
-  }
-
-  function isTransientFetchError(error: unknown) {
-    const message = errorMessage(error, '').toLowerCase()
-    return (
-      message.includes('fetch failed') ||
-      message.includes('failed to fetch') ||
-      message.includes('networkerror') ||
-      message.includes('network request failed')
-    )
+    setCloudIssue(null)
   }
 
   function isCloudErrorDismissed() {
@@ -132,6 +127,20 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     cloudErrorDismissedUntil.current = Date.now() + CLOUD_ERROR_DISMISS_MS
     setCloudStatus('local')
     setCloudError(null)
+    setCloudIssue(null)
+  }
+
+  function reportCloudIssue(input: {
+    error?: unknown
+    fallback?: string
+    message?: string
+    operation: CloudOperation
+  }) {
+    const issue = createCloudIssue(input)
+    setCloudStatus('error')
+    setCloudError(issue.message)
+    setCloudIssue(issue)
+    return issue
   }
 
   function reportCloudLoadFailure(error: unknown, silent: boolean) {
@@ -140,21 +149,22 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     if (isCloudErrorDismissed()) {
       setCloudStatus('local')
       setCloudError(null)
+      setCloudIssue(null)
       return
     }
 
     if (silent && isTransientFetchError(error) && cloudLoadFailureCount.current < 3) {
       setCloudStatus(snapshotRef.current.accountProfile ? 'synced' : 'local')
       setCloudError(null)
+      setCloudIssue(null)
       return
     }
 
-    setCloudStatus('error')
-    setCloudError(
-      isTransientFetchError(error)
-        ? 'BookNest is having trouble reaching cloud sync. Your local data is still here; retry in a moment.'
-        : errorMessage(error, 'Cloud sync failed.'),
-    )
+    reportCloudIssue({
+      error,
+      fallback: 'Cloud sync failed.',
+      operation: 'load',
+    })
   }
 
   async function refreshCloudData(options: { silent?: boolean } = {}) {
@@ -182,8 +192,10 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
         setSnapshot(result.snapshot)
         clearCloudIssue('synced')
       } else {
-        setCloudStatus('error')
-        setCloudError('Cloud sync could not load your BookNest data.')
+        reportCloudIssue({
+          message: 'Cloud sync could not load your BookNest data.',
+          operation: 'load',
+        })
       }
     } catch (error) {
       reportCloudLoadFailure(error, silent)
@@ -209,20 +221,26 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       })
 
       if (!result.ok) {
-        setCloudStatus('error')
-        setCloudError('Cloud sync could not save your BookNest data.')
+        reportCloudIssue({
+          message: 'Cloud sync could not save your BookNest data.',
+          operation: 'save',
+        })
         return false
       }
 
       clearCloudIssue('synced')
       return true
     } catch (error) {
-      setCloudStatus('error')
       if (isCloudErrorDismissed()) {
         setCloudStatus('local')
         setCloudError(null)
+        setCloudIssue(null)
       } else {
-        setCloudError(errorMessage(error, 'Cloud sync failed.'))
+        reportCloudIssue({
+          error,
+          fallback: 'Cloud sync failed.',
+          operation: 'save',
+        })
       }
       console.error('[BookNest] Cloud save failed', error)
       return false
@@ -251,8 +269,11 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
         clearCloudIssue('synced')
       }
     } catch (error) {
-      setCloudStatus('error')
-      setCloudError(errorMessage(error, 'Cloud cleanup failed.'))
+      reportCloudIssue({
+        error,
+        fallback: 'Cloud cleanup failed.',
+        operation: 'cleanup',
+      })
     }
   }
 
@@ -355,17 +376,23 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           if (result.ok) {
             clearCloudIssue('synced')
           } else {
-            setCloudStatus('error')
-            setCloudError('Cloud sync could not save your BookNest data.')
+            reportCloudIssue({
+              message: 'Cloud sync could not save your BookNest data.',
+              operation: 'save',
+            })
           }
         })
         .catch((error) => {
           if (isCloudErrorDismissed()) {
             setCloudStatus('local')
             setCloudError(null)
+            setCloudIssue(null)
           } else {
-            setCloudStatus('error')
-            setCloudError(errorMessage(error, 'Cloud sync failed.'))
+            reportCloudIssue({
+              error,
+              fallback: 'Cloud sync failed.',
+              operation: 'save',
+            })
           }
           if (!cloudSaveErrorLogged.current) {
             cloudSaveErrorLogged.current = true
@@ -383,6 +410,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     snapshot,
     cloudStatus,
     cloudError,
+    cloudIssue,
     refreshCloudData,
     syncCloudData,
     dismissCloudError,
@@ -441,8 +469,11 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           })
           .catch((error) => {
             setSnapshot(localSnapshot)
-            setCloudStatus('error')
-            setCloudError(errorMessage(error, 'Cloud sync failed.'))
+            reportCloudIssue({
+              error,
+              fallback: 'Cloud sync failed.',
+              operation: 'sign-in',
+            })
           })
           .finally(() => {
             setCloudReady(true)
@@ -462,6 +493,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       setCloudReady(true)
       setCloudStatus('local')
       setCloudError(null)
+      setCloudIssue(null)
       setSnapshot((current) => createEmptySnapshot(current.theme))
     },
     deleteCalendar(calendarId) {
@@ -514,8 +546,10 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       const idToken = readGoogleIdToken()
 
       if (acceptedInvite?.calendarId && !idToken) {
-        setCloudStatus('error')
-        setCloudError('Sign in with Google before accepting shared calendar invites.')
+        reportCloudIssue({
+          message: 'Sign in with Google before accepting shared calendar invites.',
+          operation: 'accept-invite',
+        })
         return
       }
 
@@ -528,12 +562,13 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
         })
           .then((result) => {
             if (!result.ok) {
-              setCloudStatus('error')
-              setCloudError(
-                result.reason === 'calendar-not-found'
-                  ? 'This invite link is not ready in cloud storage yet. Ask the owner to create a fresh invite link.'
-                  : 'Cloud invite accept failed.',
-              )
+              reportCloudIssue({
+                message:
+                  result.reason === 'calendar-not-found'
+                    ? 'This invite link is not ready in cloud storage yet. Ask the owner to create a fresh invite link.'
+                    : 'Cloud invite accept failed.',
+                operation: 'accept-invite',
+              })
               return
             }
 
@@ -551,8 +586,11 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
             }
           })
           .catch((error) => {
-            setCloudStatus('error')
-            setCloudError(errorMessage(error, 'Cloud invite accept failed.'))
+            reportCloudIssue({
+              error,
+              fallback: 'Cloud invite accept failed.',
+              operation: 'accept-invite',
+            })
             console.error('[BookNest] Cloud invite accept failed', error)
           })
 
