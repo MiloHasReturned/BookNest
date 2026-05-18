@@ -42,6 +42,7 @@ import { clearGoogleSession, readGoogleIdToken } from '#/lib/googleSession'
 
 type BookNestContextValue = {
   snapshot: BookNestSnapshot
+  isBooting: boolean
   cloudStatus: 'local' | 'syncing' | 'synced' | 'error'
   cloudError: string | null
   cloudIssue: CloudIssue | null
@@ -408,6 +409,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
 
   const value: BookNestContextValue = {
     snapshot,
+    isBooting: !cloudReady,
     cloudStatus,
     cloudError,
     cloudIssue,

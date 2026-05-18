@@ -18,6 +18,7 @@ import {
   useBookNest,
 } from '#/components/book-nest/BookNestProvider'
 import { AnimatedBackdrop } from '#/components/book-nest/AnimatedBackdrop'
+import { BookNestLoadingScreen } from '#/components/book-nest/BookNestLoadingScreen'
 import {
   type ChatMessage,
   type CalendarReservation,
@@ -53,6 +54,7 @@ export function BookNestCalendarDetail({
     cloudIssue,
     cloudStatus,
     dismissCloudError,
+    isBooting,
     refreshCloudData,
     removeReservation,
     sendMessage,
@@ -87,6 +89,16 @@ export function BookNestCalendarDetail({
       setEndDate(selectedDate)
     }
   }, [endDate, selectedDate])
+
+  if (isBooting) {
+    return (
+      <BookNestLoadingScreen
+        theme={snapshot.theme}
+        title="Opening your calendar"
+        detail="Loading shared reservations, day notes, invite state, and chat history."
+      />
+    )
+  }
 
   if (!calendar) {
     return (

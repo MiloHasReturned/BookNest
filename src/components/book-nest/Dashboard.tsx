@@ -19,6 +19,7 @@ import {
   useState,
 } from 'react'
 import { AnimatedBackdrop } from '#/components/book-nest/AnimatedBackdrop'
+import { BookNestLoadingScreen } from '#/components/book-nest/BookNestLoadingScreen'
 import { GoogleSignInButton } from '#/components/book-nest/GoogleSignInButton'
 import { useBookNest } from '#/components/book-nest/BookNestProvider'
 import {
@@ -56,6 +57,7 @@ export function BookNestDashboard() {
     saveAccountProfile,
     setAnimationStyle,
     setThemeColor,
+    isBooting,
   } = useBookNest()
   const [searchText, setSearchText] = useState('')
   const [showCustomization, setShowCustomization] = useState(false)
@@ -74,6 +76,10 @@ export function BookNestDashboard() {
   const totalCalendars = snapshot.calendars.length + snapshot.invitedCalendars.length
 
   useEffect(() => {
+    if (isBooting) {
+      return
+    }
+
     const inviteParam = new URLSearchParams(window.location.search).get('invite')
     if (!inviteParam) {
       return
@@ -113,7 +119,12 @@ export function BookNestDashboard() {
     snapshot.calendars,
     snapshot.invitedCalendars,
     snapshot.invites,
+    isBooting,
   ])
+
+  if (isBooting) {
+    return <BookNestLoadingScreen theme={snapshot.theme} />
+  }
 
   return (
     <>
