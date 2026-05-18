@@ -83,6 +83,16 @@ type CreateCloudCalendarInviteInput = {
   senderName?: string | null
 }
 
+type CloudCalendarMutationInput = {
+  idToken?: string | null
+  calendarId?: string | null
+}
+
+type CloudInviteMutationInput = {
+  idToken?: string | null
+  inviteId?: string | null
+}
+
 export const loadCloudSnapshot = createServerFn({ method: 'POST' })
   .inputValidator((input: LoadCloudSnapshotInput) => input)
   .handler(async ({ data }) => {
@@ -239,8 +249,167 @@ export const saveCloudSnapshot = createServerFn({ method: 'POST' })
 
     await upsertProfile(user, accountProfile, snapshot.theme)
     await upsertOwnedCalendars(user.email, snapshot)
+    await deleteRemovedOwnedCalendars(user.email, snapshot)
     await upsertAcceptedMemberships(user.email, snapshot)
     await upsertVisibleCalendarStates(user.email, snapshot)
+
+    return {
+      ok: true,
+    }
+  })
+
+export const deleteCloudCalendar = createServerFn({ method: 'POST' })
+  .inputValidator((input: CloudCalendarMutationInput) => input)
+  .handler(async ({ data }) => {
+    const { idToken, calendarId } = data
+
+    if (!idToken || !calendarId) {
+      return {
+        ok: false,
+        reason: 'missing-data',
+      }
+    }
+
+    const user = await verifyGoogleIdToken(idToken)
+    const calendar = (await getCalendarsByIds([calendarId]))[0]
+
+    if (!calendar) {
+      return {
+        ok: true,
+        reason: 'already-deleted',
+      }
+    }
+
+    if (calendar.owner_email !== user.email) {
+      return {
+        ok: false,
+        reason: 'not-owner',
+      }
+    }
+
+    await supabaseRequest<null>(
+      `booknest_calendars?id=eq.${encodeURIComponent(
+        calendarId,
+      )}&owner_email=eq.${encodeURIComponent(user.email)}`,
+      {
+        method: 'DELETE',
+        allowEmpty: true,
+      },
+    )
+
+    return {
+      ok: true,
+    }
+  })
+
+export const leaveCloudCalendar = createServerFn({ method: 'POST' })
+  .inputValidator((input: CloudCalendarMutationInput) => input)
+  .handler(async ({ data }) => {
+    const { idToken, calendarId } = data
+
+    if (!idToken || !calendarId) {
+      return {
+        ok: false,
+        reason: 'missing-data',
+      }
+    }
+
+    const user = await verifyGoogleIdToken(idToken)
+    const calendar = (await getCalendarsByIds([calendarId]))[0]
+
+    if (calendar?.owner_email === user.email) {
+      return {
+        ok: false,
+        reason: 'owner-cannot-leave',
+      }
+    }
+
+    await supabaseRequest<null>(
+      `booknest_memberships?calendar_id=eq.${encodeURIComponent(
+        calendarId,
+      )}&user_email=eq.${encodeURIComponent(user.email)}`,
+      {
+        method: 'DELETE',
+        allowEmpty: true,
+      },
+    )
+
+    await supabaseRequest<null>(
+      `booknest_invites?calendar_id=eq.${encodeURIComponent(
+        calendarId,
+      )}&recipient_email=eq.${encodeURIComponent(user.email)}&status=eq.accepted`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'rejected',
+        }),
+        allowEmpty: true,
+      },
+    )
+
+    return {
+      ok: true,
+    }
+  })
+
+export const rejectCloudCalendarInvite = createServerFn({ method: 'POST' })
+  .inputValidator((input: CloudInviteMutationInput) => input)
+  .handler(async ({ data }) => {
+    const { idToken, inviteId } = data
+
+    if (!idToken || !inviteId) {
+      return {
+        ok: false,
+        reason: 'missing-data',
+      }
+    }
+
+    const user = await verifyGoogleIdToken(idToken)
+
+    await supabaseRequest<null>(
+      `booknest_invites?id=eq.${encodeURIComponent(
+        inviteId,
+      )}&recipient_email=eq.${encodeURIComponent(user.email)}&status=eq.pending`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'rejected',
+        }),
+        allowEmpty: true,
+      },
+    )
+
+    return {
+      ok: true,
+    }
+  })
+
+export const clearCloudCalendarInvites = createServerFn({ method: 'POST' })
+  .inputValidator((input: LoadCloudSnapshotInput) => input)
+  .handler(async ({ data }) => {
+    const { idToken } = data
+
+    if (!idToken) {
+      return {
+        ok: false,
+        reason: 'missing-token',
+      }
+    }
+
+    const user = await verifyGoogleIdToken(idToken)
+
+    await supabaseRequest<null>(
+      `booknest_invites?recipient_email=eq.${encodeURIComponent(
+        user.email,
+      )}&status=eq.pending`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'rejected',
+        }),
+        allowEmpty: true,
+      },
+    )
 
     return {
       ok: true,
@@ -581,6 +750,30 @@ async function upsertOwnedCalendars(email: string, snapshot: BookNestSnapshot) {
   )
 }
 
+async function deleteRemovedOwnedCalendars(email: string, snapshot: BookNestSnapshot) {
+  const ownedCalendars = await getOwnedCalendars(email)
+  const retainedCalendarIds = new Set(
+    snapshot.calendars.map((calendar) => calendar.id),
+  )
+  const removedCalendarIds = ownedCalendars
+    .map((calendar) => calendar.id)
+    .filter((calendarId) => !retainedCalendarIds.has(calendarId))
+
+  if (!removedCalendarIds.length) {
+    return
+  }
+
+  await supabaseRequest<null>(
+    `booknest_calendars?id=in.(${removedCalendarIds
+      .map(encodeURIComponent)
+      .join(',')})&owner_email=eq.${encodeURIComponent(email)}`,
+    {
+      method: 'DELETE',
+      allowEmpty: true,
+    },
+  )
+}
+
 async function upsertAcceptedMemberships(email: string, snapshot: BookNestSnapshot) {
   const invitedCalendarIds = snapshot.invitedCalendars.map((calendar) => calendar.id)
   const existingInvitedCalendars = invitedCalendarIds.length
@@ -641,6 +834,9 @@ async function upsertVisibleCalendarStates(email: string, snapshot: BookNestSnap
   const existingStates = await getCalendarStates(
     visibleCalendars.map((calendar) => calendar.id),
   )
+  const existingStateById = new Map(
+    existingStates.map((state) => [state.calendar_id, state] as const),
+  )
   const existingStateIds = new Set(
     existingStates.map((state) => state.calendar_id),
   )
@@ -664,7 +860,10 @@ async function upsertVisibleCalendarStates(email: string, snapshot: BookNestSnap
       calendar_id: calendar.id,
       reservations: snapshot.reservationsByCalendar[calendar.id] ?? [],
       day_notes: snapshot.dayNotesByCalendar[calendar.id] ?? {},
-      chat: snapshot.chatByCalendar[calendar.id] ?? [],
+      chat: mergeChatMessages(
+        existingStateById.get(calendar.id)?.chat ?? [],
+        snapshot.chatByCalendar[calendar.id] ?? [],
+      ),
     }))
 
   if (!rows.length) {
@@ -681,6 +880,40 @@ async function upsertVisibleCalendarStates(email: string, snapshot: BookNestSnap
       body: JSON.stringify(rows),
     },
   )
+}
+
+function mergeChatMessages(
+  remoteMessages: ChatMessage[],
+  localMessages: ChatMessage[],
+) {
+  const merged = new Map<string, ChatMessage>()
+
+  for (const message of remoteMessages) {
+    merged.set(message.id, message)
+  }
+
+  for (const message of localMessages) {
+    const existing = merged.get(message.id)
+    if (!existing) {
+      merged.set(message.id, message)
+      continue
+    }
+
+    merged.set(message.id, {
+      ...existing,
+      ...message,
+      reactions: mergeReactions(existing.reactions, message.reactions),
+    })
+  }
+
+  return [...merged.values()].sort(
+    (left, right) =>
+      new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
+  )
+}
+
+function mergeReactions(remoteReactions: string[], localReactions: string[]) {
+  return [...new Set([...remoteReactions, ...localReactions])]
 }
 
 function profileToAccountProfile(

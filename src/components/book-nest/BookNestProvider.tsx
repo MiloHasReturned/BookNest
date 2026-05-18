@@ -28,8 +28,12 @@ import {
 } from '#/lib/booknest'
 import {
   acceptCloudCalendarInvite,
+  clearCloudCalendarInvites,
   clearCloudErrorCalendars,
+  deleteCloudCalendar,
+  leaveCloudCalendar,
   loadCloudSnapshot,
+  rejectCloudCalendarInvite,
   saveCloudSnapshot,
 } from '#/lib/booknestCloud'
 import {
@@ -107,6 +111,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   const cloudSaveErrorLogged = useRef(false)
   const cloudLoadFailureCount = useRef(0)
   const cloudErrorDismissedUntil = useRef(0)
+  const pendingLocalCloudSave = useRef(false)
   const snapshotRef = useRef(snapshot)
 
   useEffect(() => {
@@ -173,6 +178,10 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     const idToken = readGoogleIdToken()
     if (!idToken) {
       setCloudStatus('local')
+      return
+    }
+
+    if (silent && pendingLocalCloudSave.current) {
       return
     }
 
@@ -366,6 +375,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     }
 
     const saveTimer = window.setTimeout(() => {
+      pendingLocalCloudSave.current = true
       setCloudStatus('syncing')
       void saveCloudSnapshot({
         data: {
@@ -399,6 +409,9 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
             cloudSaveErrorLogged.current = true
             console.error('[BookNest] Cloud save failed', error)
           }
+        })
+        .finally(() => {
+          pendingLocalCloudSave.current = false
         })
     }, 650)
 
@@ -499,6 +512,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       setSnapshot((current) => createEmptySnapshot(current.theme))
     },
     deleteCalendar(calendarId) {
+      const idToken = readGoogleIdToken()
       setSnapshot((current) => {
         const retainedInvites = current.invites.filter(
           (invite) => invite.calendarId !== calendarId,
@@ -522,8 +536,39 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           chatByCalendar,
         }
       })
+
+      if (idToken) {
+        void deleteCloudCalendar({
+          data: {
+            idToken,
+            calendarId,
+          },
+        })
+          .then((result) => {
+            if (!result.ok) {
+              reportCloudIssue({
+                message:
+                  result.reason === 'not-owner'
+                    ? 'Only the calendar owner can delete this cloud calendar.'
+                    : 'Cloud calendar delete failed.',
+                operation: 'save',
+              })
+              return
+            }
+
+            void refreshCloudData({ silent: true })
+          })
+          .catch((error) => {
+            reportCloudIssue({
+              error,
+              fallback: 'Cloud calendar delete failed.',
+              operation: 'save',
+            })
+          })
+      }
     },
     leaveCalendar(calendarId) {
+      const idToken = readGoogleIdToken()
       setSnapshot((current) => {
         const { [calendarId]: _deletedReservations, ...reservationsByCalendar } =
           current.reservationsByCalendar
@@ -542,6 +587,36 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           chatByCalendar,
         }
       })
+
+      if (idToken) {
+        void leaveCloudCalendar({
+          data: {
+            idToken,
+            calendarId,
+          },
+        })
+          .then((result) => {
+            if (!result.ok) {
+              reportCloudIssue({
+                message:
+                  result.reason === 'owner-cannot-leave'
+                    ? 'Owners need to delete a calendar instead of leaving it.'
+                    : 'Cloud calendar leave failed.',
+                operation: 'save',
+              })
+              return
+            }
+
+            void refreshCloudData({ silent: true })
+          })
+          .catch((error) => {
+            reportCloudIssue({
+              error,
+              fallback: 'Cloud calendar leave failed.',
+              operation: 'save',
+            })
+          })
+      }
     },
     acceptInvite(inviteId) {
       const acceptedInvite = snapshot.invites.find((entry) => entry.id === inviteId)
@@ -628,16 +703,48 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       })
     },
     rejectInvite(inviteId) {
+      const idToken = readGoogleIdToken()
       setSnapshot((current) => ({
         ...current,
         invites: current.invites.filter((invite) => invite.id !== inviteId),
       }))
+
+      if (idToken) {
+        void rejectCloudCalendarInvite({
+          data: {
+            idToken,
+            inviteId,
+          },
+        }).catch((error) => {
+          reportCloudIssue({
+            error,
+            fallback: 'Cloud invite reject failed.',
+            operation: 'accept-invite',
+          })
+        })
+      }
     },
     clearInvites() {
+      const idToken = readGoogleIdToken()
       setSnapshot((current) => ({
         ...current,
         invites: [],
       }))
+
+      if (idToken) {
+        void clearCloudCalendarInvites({
+          data: {
+            idToken,
+            localSnapshot: snapshotRef.current,
+          },
+        }).catch((error) => {
+          reportCloudIssue({
+            error,
+            fallback: 'Cloud invite cleanup failed.',
+            operation: 'cleanup',
+          })
+        })
+      }
     },
     createInvite(calendarId, calendarName, recipient, senderName) {
       const trimmedRecipient = recipient.trim()
