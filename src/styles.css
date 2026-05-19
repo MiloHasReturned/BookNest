@@ -115,7 +115,7 @@ textarea {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.46);
   box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(10px);
 }
 
 .site-header__brand {
@@ -187,9 +187,9 @@ textarea {
       180deg,
       color-mix(in oklab, var(--theme-card) 82%, white 18%),
       color-mix(in oklab, var(--theme-card) 90%, transparent)
-    );
+  );
   box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(22px) saturate(1.05);
+  backdrop-filter: blur(8px) saturate(1.02);
 }
 
 .book-card::before,
@@ -214,6 +214,8 @@ textarea {
 
 .book-card {
   padding: clamp(1rem, 2vw, 1.45rem);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 260px;
 }
 
 .cloud-status-card {
@@ -723,7 +725,7 @@ textarea {
     linear-gradient(145deg, color-mix(in oklab, var(--theme-card) 84%, transparent), color-mix(in oklab, var(--theme-box) 78%, transparent)),
     color-mix(in oklab, var(--theme-card) 70%, transparent);
   box-shadow: 0 22px 56px color-mix(in oklab, var(--theme-text) 16%, transparent);
-  backdrop-filter: blur(24px);
+  backdrop-filter: blur(8px);
 }
 
 .showcase-card--calendar {
@@ -1320,7 +1322,7 @@ textarea {
   place-items: center;
   background: rgba(10, 16, 24, 0.26);
   padding: 1rem;
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(8px);
 }
 
 .modal-shell {
@@ -1515,6 +1517,8 @@ textarea {
   color: var(--theme-text);
   padding: 0.72rem 0.8rem;
   overflow: hidden;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
 }
 
 .animation-row__preview {
@@ -2237,6 +2241,7 @@ textarea {
   z-index: 0;
   background: linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
   isolation: isolate;
+  contain: strict;
 }
 
 .animated-backdrop--compact {
@@ -2276,8 +2281,8 @@ textarea {
 }
 
 .animated-backdrop__layer {
-  filter: blur(38px) saturate(1.18);
-  opacity: 0.68;
+  filter: blur(22px) saturate(1.08);
+  opacity: 0.5;
   mix-blend-mode: screen;
 }
 
@@ -2360,8 +2365,8 @@ textarea {
 
 .animated-backdrop__ribbon {
   height: 18vh;
-  opacity: 0.28;
-  filter: blur(18px) saturate(1.25);
+  opacity: 0.22;
+  filter: blur(10px) saturate(1.12);
   mix-blend-mode: screen;
   transform-origin: center;
 }
@@ -2388,7 +2393,7 @@ textarea {
 }
 
 .animated-backdrop__sparkles {
-  opacity: 0.26;
+  opacity: 0.2;
   background:
     radial-gradient(circle at 12% 18%, white 0 1.3px, transparent 2.4px),
     radial-gradient(circle at 78% 28%, white 0 1px, transparent 2.2px),
@@ -2406,6 +2411,66 @@ textarea {
   mix-blend-mode: overlay;
 }
 
+body.is-scrolling .animated-backdrop *,
+body[data-performance="reduced"] .animated-backdrop * {
+  animation-play-state: paused !important;
+}
+
+body.is-scrolling .animated-backdrop__layer,
+body.is-scrolling .animated-backdrop__ribbon,
+body.is-scrolling .animated-backdrop__texture,
+body[data-performance="reduced"] .animated-backdrop__layer,
+body[data-performance="reduced"] .animated-backdrop__ribbon,
+body[data-performance="reduced"] .animated-backdrop__texture {
+  filter: none !important;
+}
+
+body.is-scrolling .animated-backdrop__layer,
+body[data-performance="reduced"] .animated-backdrop__layer {
+  opacity: 0.18;
+}
+
+body.is-scrolling .animated-backdrop__orb,
+body.is-scrolling .animated-backdrop__ribbon,
+body.is-scrolling .animated-backdrop__sparkles,
+body.is-scrolling .animated-backdrop__texture,
+body[data-performance="reduced"] .animated-backdrop__orb,
+body[data-performance="reduced"] .animated-backdrop__ribbon,
+body[data-performance="reduced"] .animated-backdrop__sparkles,
+body[data-performance="reduced"] .animated-backdrop__texture {
+  opacity: 0.08;
+}
+
+body.is-scrolling .site-header__nav,
+body.is-scrolling .book-card,
+body.is-scrolling .island-shell,
+body.is-scrolling .showcase-card,
+body[data-performance="reduced"] .site-header__nav,
+body[data-performance="reduced"] .book-card,
+body[data-performance="reduced"] .island-shell,
+body[data-performance="reduced"] .showcase-card {
+  backdrop-filter: none !important;
+}
+
+body[data-performance="reduced"] .animated-backdrop__layer--4,
+body[data-performance="reduced"] .animated-backdrop__layer--5,
+body[data-performance="reduced"] .animated-backdrop__orb,
+body[data-performance="reduced"] .animated-backdrop__ribbon,
+body[data-performance="reduced"] .animated-backdrop__sparkles {
+  display: none;
+}
+
+body.is-scrolling .icon-chip,
+body.is-scrolling .pill-button,
+body.is-scrolling .action-button,
+body.is-scrolling .text-button,
+body.is-scrolling .calendar-card-action,
+body.is-scrolling .preset-card,
+body.is-scrolling .animation-row,
+body.is-scrolling .tint-swatch {
+  transition: none !important;
+}
+
 .animated-backdrop--compact .animated-backdrop__veil,
 .animated-backdrop--compact .animated-backdrop__orb,
 .animated-backdrop--compact .animated-backdrop__ribbon,
@@ -2414,7 +2479,7 @@ textarea {
 }
 
 .animated-backdrop--compact .animated-backdrop__layer {
-  filter: blur(18px) saturate(1.25);
+  filter: blur(10px) saturate(1.12);
 }
 
 .animated-backdrop[data-style="softGlow"] .animated-backdrop__base {
@@ -3270,6 +3335,27 @@ textarea {
 }
 
 @media (max-width: 900px) {
+  .animated-backdrop__layer,
+  .animated-backdrop__ribbon,
+  .animated-backdrop__texture {
+    filter: none !important;
+  }
+
+  .animated-backdrop__layer--4,
+  .animated-backdrop__layer--5,
+  .animated-backdrop__orb,
+  .animated-backdrop__ribbon,
+  .animated-backdrop__sparkles {
+    display: none;
+  }
+
+  .book-card,
+  .island-shell,
+  .site-header__nav,
+  .showcase-card {
+    backdrop-filter: none !important;
+  }
+
   .site-header__nav,
   .site-footer__inner,
   .account-row,
