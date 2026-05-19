@@ -460,6 +460,21 @@ export const createCloudCalendarInvite = createServerFn({ method: 'POST' })
       }
     }
 
+    await supabaseRequest<null>(
+      `booknest_invites?calendar_id=eq.${encodeURIComponent(
+        calendarId,
+      )}&recipient_email=eq.${encodeURIComponent(
+        normalizedRecipient,
+      )}&status=eq.pending`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'rejected',
+        }),
+        allowEmpty: true,
+      },
+    )
+
     await supabaseRequest<SupabaseInviteRow[]>(
       'booknest_invites',
       {
@@ -858,14 +873,28 @@ async function upsertVisibleCalendarStates(email: string, snapshot: BookNestSnap
       return hasLocalData || !existingStateIds.has(calendar.id)
     })
     .map((calendar) => ({
-      calendar_id: calendar.id,
-      reservations: snapshot.reservationsByCalendar[calendar.id] ?? [],
-      day_notes: snapshot.dayNotesByCalendar[calendar.id] ?? {},
-      chat: mergeChatMessages(
-        existingStateById.get(calendar.id)?.chat ?? [],
-        snapshot.chatByCalendar[calendar.id] ?? [],
-      ),
+      calendar,
+      existingState: existingStateById.get(calendar.id),
     }))
+    .map(({ calendar, existingState }) => {
+      const isOwner = ownedCalendarIds.has(calendar.id)
+      const localReservations = snapshot.reservationsByCalendar[calendar.id] ?? []
+      const localDayNotes = snapshot.dayNotesByCalendar[calendar.id] ?? {}
+
+      return {
+        calendar_id: calendar.id,
+        reservations: isOwner
+          ? localReservations
+          : mergeReservations(existingState?.reservations ?? [], localReservations),
+        day_notes: isOwner
+          ? localDayNotes
+          : mergeDayNotes(existingState?.day_notes ?? {}, localDayNotes),
+        chat: mergeChatMessages(
+          existingState?.chat ?? [],
+          snapshot.chatByCalendar[calendar.id] ?? [],
+        ),
+      }
+    })
 
   if (!rows.length) {
     return
@@ -915,6 +944,40 @@ function mergeChatMessages(
 
 function mergeReactions(remoteReactions: string[] = [], localReactions: string[] = []) {
   return [...new Set([...remoteReactions, ...localReactions])]
+}
+
+function mergeReservations(
+  remoteReservations: CalendarReservation[] = [],
+  localReservations: CalendarReservation[] = [],
+) {
+  const merged = new Map<string, CalendarReservation>()
+
+  for (const reservation of remoteReservations) {
+    merged.set(reservation.id, reservation)
+  }
+
+  for (const reservation of localReservations) {
+    merged.set(reservation.id, reservation)
+  }
+
+  return [...merged.values()].sort((left, right) => {
+    const dateOrder = left.date.localeCompare(right.date)
+    if (dateOrder !== 0) {
+      return dateOrder
+    }
+
+    return left.title.localeCompare(right.title)
+  })
+}
+
+function mergeDayNotes(
+  remoteDayNotes: Record<string, string> = {},
+  localDayNotes: Record<string, string> = {},
+) {
+  return {
+    ...remoteDayNotes,
+    ...localDayNotes,
+  }
 }
 
 function timestampValue(timestamp: string) {
