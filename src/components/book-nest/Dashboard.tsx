@@ -27,6 +27,7 @@ import {
 import { AnimatedBackdrop } from '#/components/book-nest/AnimatedBackdrop'
 import { BookNestLoadingScreen } from '#/components/book-nest/BookNestLoadingScreen'
 import { GoogleSignInButton } from '#/components/book-nest/GoogleSignInButton'
+import { StatusPill } from '#/components/book-nest/StatusPill'
 import { useBookNest } from '#/components/book-nest/BookNestProvider'
 import {
   type AccountProfile,
@@ -49,6 +50,7 @@ export function BookNestDashboard() {
     clearAccountProfile,
     clearInvites,
     clearBrokenCloudCalendars,
+    cloudActivity,
     cloudError,
     cloudIssue,
     cloudStatus,
@@ -192,6 +194,7 @@ export function BookNestDashboard() {
               <p className="book-hero-copy">
                 Create shared calendars, reserve time, and keep the crew in sync.
               </p>
+              <StatusPill activity={cloudActivity} status={cloudStatus} />
               <div className="hero-actions">
                 <button
                   type="button"

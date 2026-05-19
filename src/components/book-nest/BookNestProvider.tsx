@@ -48,6 +48,7 @@ type BookNestContextValue = {
   snapshot: BookNestSnapshot
   isBooting: boolean
   cloudStatus: 'local' | 'syncing' | 'synced' | 'error'
+  cloudActivity: 'idle' | 'loading' | 'saving' | 'syncing'
   cloudError: string | null
   cloudIssue: CloudIssue | null
   refreshCloudData: (options?: { silent?: boolean }) => Promise<void>
@@ -106,6 +107,8 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   const [cloudReady, setCloudReady] = useState(false)
   const [cloudStatus, setCloudStatus] =
     useState<BookNestContextValue['cloudStatus']>('local')
+  const [cloudActivity, setCloudActivity] =
+    useState<BookNestContextValue['cloudActivity']>('idle')
   const [cloudError, setCloudError] = useState<string | null>(null)
   const [cloudIssue, setCloudIssue] = useState<CloudIssue | null>(null)
   const cloudSaveErrorLogged = useRef(false)
@@ -122,6 +125,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   function clearCloudIssue(nextStatus: BookNestContextValue['cloudStatus'] = 'synced') {
     cloudLoadFailureCount.current = 0
     setCloudStatus(nextStatus)
+    setCloudActivity('idle')
     setCloudError(null)
     setCloudIssue(null)
   }
@@ -133,6 +137,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   function dismissCloudError() {
     cloudErrorDismissedUntil.current = Date.now() + CLOUD_ERROR_DISMISS_MS
     setCloudStatus('local')
+    setCloudActivity('idle')
     setCloudError(null)
     setCloudIssue(null)
   }
@@ -145,6 +150,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   }) {
     const issue = createCloudIssue(input)
     setCloudStatus('error')
+    setCloudActivity('idle')
     setCloudError(issue.message)
     setCloudIssue(issue)
     return issue
@@ -155,6 +161,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
 
     if (isCloudErrorDismissed()) {
       setCloudStatus('local')
+      setCloudActivity('idle')
       setCloudError(null)
       setCloudIssue(null)
       return
@@ -162,6 +169,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
 
     if (silent && isTransientFetchError(error) && cloudLoadFailureCount.current < 3) {
       setCloudStatus(snapshotRef.current.accountProfile ? 'synced' : 'local')
+      setCloudActivity('idle')
       setCloudError(null)
       setCloudIssue(null)
       return
@@ -179,6 +187,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     const idToken = readGoogleIdToken()
     if (!idToken) {
       setCloudStatus('local')
+      setCloudActivity('idle')
       return
     }
 
@@ -189,6 +198,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     if (!silent) {
       cloudErrorDismissedUntil.current = 0
       setCloudStatus('syncing')
+      setCloudActivity('loading')
     }
 
     try {
@@ -218,10 +228,12 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     const idToken = readGoogleIdToken()
     if (!idToken || !snapshotRef.current.accountProfile) {
       setCloudStatus('local')
+      setCloudActivity('idle')
       return false
     }
 
     setCloudStatus('syncing')
+    setCloudActivity('syncing')
     const saveId = ++cloudSaveSequence.current
     pendingLocalCloudSave.current = true
 
@@ -246,6 +258,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       if (isCloudErrorDismissed()) {
         setCloudStatus('local')
+        setCloudActivity('idle')
         setCloudError(null)
         setCloudIssue(null)
       } else {
@@ -260,6 +273,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     } finally {
       if (saveId === cloudSaveSequence.current) {
         pendingLocalCloudSave.current = false
+        setCloudActivity('idle')
       }
     }
   }
@@ -271,6 +285,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     }
 
     setCloudStatus('syncing')
+    setCloudActivity('syncing')
 
     try {
       const result = await clearCloudErrorCalendars({
@@ -385,6 +400,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       const saveId = ++cloudSaveSequence.current
       pendingLocalCloudSave.current = true
       setCloudStatus('syncing')
+      setCloudActivity('saving')
       void saveCloudSnapshot({
         data: {
           idToken,
@@ -404,6 +420,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
         .catch((error) => {
           if (isCloudErrorDismissed()) {
             setCloudStatus('local')
+            setCloudActivity('idle')
             setCloudError(null)
             setCloudIssue(null)
           } else {
@@ -421,6 +438,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
         .finally(() => {
           if (saveId === cloudSaveSequence.current) {
             pendingLocalCloudSave.current = false
+            setCloudActivity('idle')
           }
         })
     }, 650)
@@ -434,6 +452,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     snapshot,
     isBooting: !cloudReady,
     cloudStatus,
+    cloudActivity,
     cloudError,
     cloudIssue,
     refreshCloudData,

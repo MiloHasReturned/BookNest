@@ -19,6 +19,7 @@ import {
 } from '#/components/book-nest/BookNestProvider'
 import { AnimatedBackdrop } from '#/components/book-nest/AnimatedBackdrop'
 import { BookNestLoadingScreen } from '#/components/book-nest/BookNestLoadingScreen'
+import { StatusPill, TypingPill } from '#/components/book-nest/StatusPill'
 import {
   type ChatMessage,
   type CalendarReservation,
@@ -50,6 +51,7 @@ export function BookNestCalendarDetail({
     snapshot,
     addReaction,
     clearBrokenCloudCalendars,
+    cloudActivity,
     cloudError,
     cloudIssue,
     cloudStatus,
@@ -83,6 +85,7 @@ export function BookNestCalendarDetail({
   const messages = snapshot.chatByCalendar[calendarId] ?? []
   const dayNotes = snapshot.dayNotesByCalendar[calendarId] ?? {}
   const canCleanCloudError = isCleanableCloudIssue(cloudIssue)
+  const isTypingMessage = messageText.trim().length > 0
 
   useEffect(() => {
     if (endDate < selectedDate) {
@@ -141,6 +144,7 @@ export function BookNestCalendarDetail({
                 <p className="book-hero-copy">
                   Shared calendar for boats, cabins, and group plans.
                 </p>
+                <StatusPill activity={cloudActivity} status={cloudStatus} />
               </div>
 
               <button
@@ -422,7 +426,10 @@ export function BookNestCalendarDetail({
 
           <section className="book-card rise-in" style={{ animationDelay: '150ms' }}>
             <div className="section-stack">
-              <h2 className="section-heading">Calendar Chat</h2>
+              <div className="section-head">
+                <h2 className="section-heading">Calendar Chat</h2>
+                <StatusPill activity={cloudActivity} status={cloudStatus} />
+              </div>
 
               <div className="chat-thread">
                 {messages.length ? (
@@ -517,6 +524,8 @@ export function BookNestCalendarDetail({
                   </button>
                 </div>
               ) : null}
+
+              {isTypingMessage ? <TypingPill name={senderDisplayName} /> : null}
 
               <div className="chat-compose">
                 <label className="composer-shell">
