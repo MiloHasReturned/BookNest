@@ -112,6 +112,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   const cloudLoadFailureCount = useRef(0)
   const cloudErrorDismissedUntil = useRef(0)
   const pendingLocalCloudSave = useRef(false)
+  const cloudSaveSequence = useRef(0)
   const snapshotRef = useRef(snapshot)
 
   useEffect(() => {
@@ -221,6 +222,8 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     }
 
     setCloudStatus('syncing')
+    const saveId = ++cloudSaveSequence.current
+    pendingLocalCloudSave.current = true
 
     try {
       const result = await saveCloudSnapshot({
@@ -254,6 +257,10 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       }
       console.error('[BookNest] Cloud save failed', error)
       return false
+    } finally {
+      if (saveId === cloudSaveSequence.current) {
+        pendingLocalCloudSave.current = false
+      }
     }
   }
 
@@ -375,6 +382,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     }
 
     const saveTimer = window.setTimeout(() => {
+      const saveId = ++cloudSaveSequence.current
       pendingLocalCloudSave.current = true
       setCloudStatus('syncing')
       void saveCloudSnapshot({
@@ -411,7 +419,9 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           }
         })
         .finally(() => {
-          pendingLocalCloudSave.current = false
+          if (saveId === cloudSaveSequence.current) {
+            pendingLocalCloudSave.current = false
+          }
         })
     }, 650)
 
@@ -848,7 +858,12 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
           ...current.chatByCalendar,
           [calendarId]: (current.chatByCalendar[calendarId] ?? []).map((message) =>
             message.id === messageId
-              ? { ...message, reactions: [...message.reactions, reaction] }
+              ? {
+                  ...message,
+                  reactions: message.reactions.includes(reaction)
+                    ? message.reactions
+                    : [...message.reactions, reaction],
+                }
               : message,
           ),
         },

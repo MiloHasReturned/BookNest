@@ -124,6 +124,7 @@ export const loadCloudSnapshot = createServerFn({ method: 'POST' })
     const accountProfile = profileToAccountProfile(profile, user)
 
     if (
+      !profile &&
       !visibleCalendars.length &&
       localSnapshot &&
       (localSnapshot.calendars.length ||
@@ -137,7 +138,7 @@ export const loadCloudSnapshot = createServerFn({ method: 'POST' })
         snapshot: normalizeSnapshot({
           ...localSnapshot,
           accountProfile,
-          theme: profile?.theme ?? localSnapshot.theme,
+          theme: localSnapshot.theme,
         }),
       }
     }
@@ -902,18 +903,23 @@ function mergeChatMessages(
     merged.set(message.id, {
       ...existing,
       ...message,
-      reactions: mergeReactions(existing.reactions, message.reactions),
+      reactions: mergeReactions(existing.reactions ?? [], message.reactions ?? []),
     })
   }
 
   return [...merged.values()].sort(
     (left, right) =>
-      new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
+      timestampValue(left.timestamp) - timestampValue(right.timestamp),
   )
 }
 
-function mergeReactions(remoteReactions: string[], localReactions: string[]) {
+function mergeReactions(remoteReactions: string[] = [], localReactions: string[] = []) {
   return [...new Set([...remoteReactions, ...localReactions])]
+}
+
+function timestampValue(timestamp: string) {
+  const value = new Date(timestamp).getTime()
+  return Number.isFinite(value) ? value : 0
 }
 
 function profileToAccountProfile(
