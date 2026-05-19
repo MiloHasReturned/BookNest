@@ -21,8 +21,6 @@ export const verifyEmail = createServerFn({ method: 'POST' })
       throw new Error('Set EMAIL_VERIFY_API_KEY in the environment')
     }
 
-    console.log('[verifyEmail] request', { email, apiUrl: API_URL, hasKey: Boolean(API_KEY) })
-
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -57,8 +55,6 @@ export const verifyEmail = createServerFn({ method: 'POST' })
       (responseData.reason as string | undefined) ??
       (responseData.status as string | undefined) ??
       'unknown'
-
-    console.log('[verifyEmail] result', { status: response.status, deliverable, disposable, reason })
 
     const result: EmailVerificationResult = { deliverable, disposable, reason }
 

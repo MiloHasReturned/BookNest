@@ -509,12 +509,12 @@ export function readSnapshot() {
     return createEmptySnapshot()
   }
 
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-  if (!stored) {
-    return createEmptySnapshot()
-  }
-
   try {
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    if (!stored) {
+      return createEmptySnapshot()
+    }
+
     const parsed = JSON.parse(stored) as Partial<BookNestSnapshot>
     return normalizeSnapshot(parsed)
   } catch {
@@ -527,7 +527,11 @@ export function saveSnapshot(snapshot: BookNestSnapshot) {
     return
   }
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+  } catch (error) {
+    console.warn('[BookNest] Could not save local snapshot.', error)
+  }
 }
 
 export function normalizeSnapshot(snapshot: Partial<BookNestSnapshot>): BookNestSnapshot {

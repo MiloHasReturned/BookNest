@@ -641,6 +641,22 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       }
 
       if (idToken && acceptedInvite?.calendarId) {
+        const restoreInvite = () => {
+          setSnapshot((current) =>
+            current.invites.some((entry) => entry.id === acceptedInvite.id)
+              ? current
+              : {
+                  ...current,
+                  invites: [acceptedInvite, ...current.invites],
+                },
+          )
+        }
+
+        setSnapshot((current) => ({
+          ...current,
+          invites: current.invites.filter((entry) => entry.id !== inviteId),
+        }))
+
         void acceptCloudCalendarInvite({
           data: {
             idToken,
@@ -649,6 +665,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
         })
           .then((result) => {
             if (!result.ok) {
+              restoreInvite()
               reportCloudIssue({
                 message:
                   result.reason === 'calendar-not-found'
@@ -673,6 +690,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
             }
           })
           .catch((error) => {
+            restoreInvite()
             reportCloudIssue({
               error,
               fallback: 'Cloud invite accept failed.',
@@ -725,13 +743,17 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
             idToken,
             inviteId,
           },
-        }).catch((error) => {
-          reportCloudIssue({
-            error,
-            fallback: 'Cloud invite reject failed.',
-            operation: 'accept-invite',
-          })
         })
+          .then(() => {
+            void refreshCloudData({ silent: true })
+          })
+          .catch((error) => {
+            reportCloudIssue({
+              error,
+              fallback: 'Cloud invite reject failed.',
+              operation: 'accept-invite',
+            })
+          })
       }
     },
     clearInvites() {
@@ -747,35 +769,47 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
             idToken,
             localSnapshot: snapshotRef.current,
           },
-        }).catch((error) => {
-          reportCloudIssue({
-            error,
-            fallback: 'Cloud invite cleanup failed.',
-            operation: 'cleanup',
-          })
         })
+          .then(() => {
+            void refreshCloudData({ silent: true })
+          })
+          .catch((error) => {
+            reportCloudIssue({
+              error,
+              fallback: 'Cloud invite cleanup failed.',
+              operation: 'cleanup',
+            })
+          })
       }
     },
     createInvite(calendarId, calendarName, recipient, senderName) {
-      const trimmedRecipient = recipient.trim()
-      if (!trimmedRecipient) {
+      const normalizedRecipient = recipient.trim().toLowerCase()
+      if (!normalizedRecipient) {
         return
       }
 
-      setSnapshot((current) => ({
-        ...current,
-        invites: [
-          {
-            id: createId(),
-            calendarId,
-            calendarName,
-            recipient: trimmedRecipient,
-            senderName: senderName.trim() || 'Someone',
-            sentDate: new Date().toISOString(),
-          },
-          ...current.invites,
-        ],
-      }))
+      setSnapshot((current) => {
+        const remainingInvites = current.invites.filter(
+          (invite) =>
+            invite.calendarId !== calendarId ||
+            invite.recipient.trim().toLowerCase() !== normalizedRecipient,
+        )
+
+        return {
+          ...current,
+          invites: [
+            {
+              id: createId(),
+              calendarId,
+              calendarName,
+              recipient: normalizedRecipient,
+              senderName: senderName.trim() || 'Someone',
+              sentDate: new Date().toISOString(),
+            },
+            ...remainingInvites,
+          ],
+        }
+      })
     },
     upsertReservation(calendarId, reservation) {
       setSnapshot((current) => {

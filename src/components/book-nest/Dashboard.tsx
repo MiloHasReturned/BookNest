@@ -1069,8 +1069,8 @@ function AccountModal({
           }
 
           onSave({
-            email,
-            username,
+            email: email.trim().toLowerCase(),
+            username: username.trim(),
             imageData,
           })
         }}
