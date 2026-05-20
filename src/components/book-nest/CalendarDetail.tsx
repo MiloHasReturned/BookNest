@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,7 +12,7 @@ import {
   SmilePlus,
   UserPlus,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   findCalendar,
   makeReservation,
@@ -39,8 +40,10 @@ import { type CloudIssue, isCleanableCloudIssue } from '#/lib/cloudDiagnostics'
 import { createCloudCalendarInvite } from '#/lib/booknestCloud'
 import { readGoogleIdToken } from '#/lib/googleSession'
 import { createCalendarInviteUrl } from '#/lib/inviteLinks'
+import { getSupabaseRealtimeClient } from '#/lib/supabaseRealtime'
 
 const REACTIONS = ['👍', '🔥', '✅', '🎉', '❤️', '👀']
+const TYPING_IDLE_MS = 1800
 
 export function BookNestCalendarDetail({
   calendarId,
@@ -77,21 +80,118 @@ export function BookNestCalendarDetail({
   const [endDate, setEndDate] = useState(() => formatDateForInput(new Date()))
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [messageText, setMessageText] = useState('')
+  const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const [showReactionsFor, setShowReactionsFor] = useState<string | null>(null)
   const [editingReservation, setEditingReservation] =
     useState<CalendarReservation | null>(null)
+  const typingChannelRef = useRef<RealtimeChannel | null>(null)
+  const typingStopTimer = useRef<number | null>(null)
+  const typingIdentity = useRef(globalThis.crypto?.randomUUID?.() ?? createTypingId())
   const reservations = snapshot.reservationsByCalendar[calendarId] ?? []
   const messages = snapshot.chatByCalendar[calendarId] ?? []
   const dayNotes = snapshot.dayNotesByCalendar[calendarId] ?? {}
   const canCleanCloudError = isCleanableCloudIssue(cloudIssue)
   const isTypingMessage = messageText.trim().length > 0
+  const senderDisplayName = snapshot.accountProfile?.username.trim() || 'Someone'
 
   useEffect(() => {
     if (endDate < selectedDate) {
       setEndDate(selectedDate)
     }
   }, [endDate, selectedDate])
+
+  useEffect(() => {
+    if (!snapshot.accountProfile) {
+      return
+    }
+
+    const client = getSupabaseRealtimeClient()
+    if (!client) {
+      return
+    }
+
+    const currentEmail = snapshot.accountProfile.email.trim().toLowerCase()
+    const channel = client.channel(`booknest-typing-${calendarId}`, {
+      config: {
+        presence: {
+          key: typingIdentity.current,
+        },
+      },
+    })
+    typingChannelRef.current = channel
+
+    function updateTypingUsers() {
+      const state = channel.presenceState<{
+        at?: number
+        email?: string
+        name?: string
+        typing?: boolean
+      }>()
+      const now = Date.now()
+      const users = Object.values(state)
+        .flat()
+        .filter((entry) => entry.typing)
+        .filter((entry) => entry.email?.trim().toLowerCase() !== currentEmail)
+        .filter((entry) => !entry.at || now - entry.at < TYPING_IDLE_MS + 900)
+        .map((entry) => entry.name?.trim() || 'Someone')
+
+      setTypingUsers([...new Set(users)])
+    }
+
+    channel
+      .on('presence', { event: 'sync' }, updateTypingUsers)
+      .on('presence', { event: 'join' }, updateTypingUsers)
+      .on('presence', { event: 'leave' }, updateTypingUsers)
+      .subscribe()
+
+    const presenceTimer = window.setInterval(updateTypingUsers, 1200)
+
+    return () => {
+      window.clearInterval(presenceTimer)
+      if (typingStopTimer.current) {
+        window.clearTimeout(typingStopTimer.current)
+        typingStopTimer.current = null
+      }
+      typingChannelRef.current = null
+      setTypingUsers([])
+      void client.removeChannel(channel)
+    }
+  }, [calendarId, snapshot.accountProfile])
+
+  useEffect(() => {
+    const channel = typingChannelRef.current
+    if (!channel || !snapshot.accountProfile) {
+      return
+    }
+
+    const trimmedMessage = messageText.trim()
+
+    if (!trimmedMessage) {
+      if (typingStopTimer.current) {
+        window.clearTimeout(typingStopTimer.current)
+        typingStopTimer.current = null
+      }
+      void channel.untrack()
+      return
+    }
+
+    void channel.track({
+      at: Date.now(),
+      email: snapshot.accountProfile.email,
+      name: senderDisplayName,
+      typing: true,
+    })
+
+    if (typingStopTimer.current) {
+      window.clearTimeout(typingStopTimer.current)
+    }
+
+    typingStopTimer.current = window.setTimeout(() => {
+      void channel.untrack()
+      typingStopTimer.current = null
+    }, TYPING_IDLE_MS)
+  }, [messageText, senderDisplayName, snapshot.accountProfile])
 
   if (isBooting) {
     return (
@@ -123,8 +223,6 @@ export function BookNestCalendarDetail({
     )
   }
 
-  const senderDisplayName =
-    snapshot.accountProfile?.username.trim() || 'Someone'
   const reservationsForSelectedDate = reservations.filter((reservation) =>
     reservationIncludesDate(reservation, selectedDate),
   )
@@ -525,7 +623,11 @@ export function BookNestCalendarDetail({
                 </div>
               ) : null}
 
-              {isTypingMessage ? <TypingPill name={senderDisplayName} /> : null}
+              {typingUsers.length ? (
+                <TypingPill label={formatTypingNames(typingUsers)} />
+              ) : isTypingMessage ? (
+                <TypingPill label={`${senderDisplayName} is typing`} />
+              ) : null}
 
               <div className="chat-compose">
                 <label className="composer-shell">
@@ -550,6 +652,7 @@ export function BookNestCalendarDetail({
                     )
                     setMessageText('')
                     setReplyTo(null)
+                    void typingChannelRef.current?.untrack()
                   }}
                 >
                   <Send size={16} />
@@ -883,4 +986,20 @@ function formatDateForInput(date: Date) {
     String(date.getMonth() + 1).padStart(2, '0'),
     String(date.getDate()).padStart(2, '0'),
   ].join('-')
+}
+
+function formatTypingNames(names: string[]) {
+  if (names.length <= 1) {
+    return `${names[0] ?? 'Someone'} is typing`
+  }
+
+  if (names.length === 2) {
+    return `${names[0]} and ${names[1]} are typing`
+  }
+
+  return `${names[0]} and ${names.length - 1} others are typing`
+}
+
+function createTypingId() {
+  return `typing-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }

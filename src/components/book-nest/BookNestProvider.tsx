@@ -43,6 +43,7 @@ import {
   isTransientFetchError,
 } from '#/lib/cloudDiagnostics'
 import { clearGoogleSession, readGoogleIdToken } from '#/lib/googleSession'
+import { getSupabaseRealtimeClient } from '#/lib/supabaseRealtime'
 
 type BookNestContextValue = {
   snapshot: BookNestSnapshot
@@ -116,11 +117,29 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   const cloudErrorDismissedUntil = useRef(0)
   const pendingLocalCloudSave = useRef(false)
   const cloudSaveSequence = useRef(0)
+  const realtimeRefreshTimer = useRef<number | null>(null)
   const snapshotRef = useRef(snapshot)
+  const realtimeEmail = snapshot.accountProfile?.email.trim().toLowerCase() ?? ''
+  const realtimeCalendarIds = [
+    ...new Set([
+      ...snapshot.calendars.map((calendar) => calendar.id),
+      ...snapshot.invitedCalendars.map((calendar) => calendar.id),
+    ]),
+  ].sort()
+  const realtimeCalendarKey = realtimeCalendarIds.join('|')
 
   useEffect(() => {
     snapshotRef.current = snapshot
   }, [snapshot])
+
+  useEffect(
+    () => () => {
+      if (realtimeRefreshTimer.current) {
+        window.clearTimeout(realtimeRefreshTimer.current)
+      }
+    },
+    [],
+  )
 
   function clearCloudIssue(nextStatus: BookNestContextValue['cloudStatus'] = 'synced') {
     cloudLoadFailureCount.current = 0
@@ -363,6 +382,94 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [cloudReady])
+
+  useEffect(() => {
+    if (!cloudReady || !realtimeEmail) {
+      return
+    }
+
+    const client = getSupabaseRealtimeClient()
+    const idToken = readGoogleIdToken()
+
+    if (!client || !idToken) {
+      return
+    }
+
+    const scheduleRealtimeRefresh = () => {
+      if (pendingLocalCloudSave.current) {
+        return
+      }
+
+      if (realtimeRefreshTimer.current) {
+        window.clearTimeout(realtimeRefreshTimer.current)
+      }
+
+      realtimeRefreshTimer.current = window.setTimeout(() => {
+        realtimeRefreshTimer.current = null
+        void refreshCloudData({ silent: true })
+      }, 500)
+    }
+    const channel = client.channel(`booknest-db-${realtimeEmail}`)
+
+    channel
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'booknest_invites',
+          filter: `recipient_email=eq.${realtimeEmail}`,
+        },
+        scheduleRealtimeRefresh,
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'booknest_memberships',
+          filter: `user_email=eq.${realtimeEmail}`,
+        },
+        scheduleRealtimeRefresh,
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'booknest_calendars',
+          filter: `owner_email=eq.${realtimeEmail}`,
+        },
+        scheduleRealtimeRefresh,
+      )
+
+    for (const calendarId of realtimeCalendarIds) {
+      channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'booknest_calendar_state',
+          filter: `calendar_id=eq.${calendarId}`,
+        },
+        scheduleRealtimeRefresh,
+      )
+    }
+
+    channel.subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
+      if (realtimeRefreshTimer.current) {
+        window.clearTimeout(realtimeRefreshTimer.current)
+        realtimeRefreshTimer.current = null
+      }
+    }
+  }, [
+    cloudReady,
+    realtimeCalendarKey,
+    realtimeEmail,
+  ])
 
   useEffect(() => {
     if (!cloudReady) {

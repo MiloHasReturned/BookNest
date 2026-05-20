@@ -30,10 +30,10 @@ export function StatusPill({ activity = 'idle', className = '', status }: Status
   )
 }
 
-export function TypingPill({ name }: { name: string }) {
+export function TypingPill({ label }: { label: string }) {
   return (
     <span className="typing-pill" aria-live="polite">
-      <span>{name} is typing</span>
+      <span>{label}</span>
       <BouncingDots />
     </span>
   )
