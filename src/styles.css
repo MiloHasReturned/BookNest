@@ -2313,6 +2313,8 @@ textarea {
   background: linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
   isolation: isolate;
   contain: strict;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .animated-backdrop--compact {
@@ -2332,6 +2334,16 @@ textarea {
 .animated-backdrop__texture {
   position: absolute;
   inset: 0;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.animated-backdrop__veil,
+.animated-backdrop__layer,
+.animated-backdrop__orb,
+.animated-backdrop__ribbon,
+.animated-backdrop__sparkles {
+  will-change: transform, opacity;
 }
 
 .animated-backdrop__base {
@@ -2482,29 +2494,20 @@ textarea {
   mix-blend-mode: overlay;
 }
 
-body.is-scrolling .animated-backdrop *,
 body[data-performance="reduced"] .animated-backdrop * {
   animation-play-state: paused !important;
 }
 
-body.is-scrolling .animated-backdrop__layer,
-body.is-scrolling .animated-backdrop__ribbon,
-body.is-scrolling .animated-backdrop__texture,
 body[data-performance="reduced"] .animated-backdrop__layer,
 body[data-performance="reduced"] .animated-backdrop__ribbon,
 body[data-performance="reduced"] .animated-backdrop__texture {
   filter: none !important;
 }
 
-body.is-scrolling .animated-backdrop__layer,
 body[data-performance="reduced"] .animated-backdrop__layer {
   opacity: 0.18;
 }
 
-body.is-scrolling .animated-backdrop__orb,
-body.is-scrolling .animated-backdrop__ribbon,
-body.is-scrolling .animated-backdrop__sparkles,
-body.is-scrolling .animated-backdrop__texture,
 body[data-performance="reduced"] .animated-backdrop__orb,
 body[data-performance="reduced"] .animated-backdrop__ribbon,
 body[data-performance="reduced"] .animated-backdrop__sparkles,
@@ -2512,10 +2515,6 @@ body[data-performance="reduced"] .animated-backdrop__texture {
   opacity: 0.08;
 }
 
-body.is-scrolling .site-header__nav,
-body.is-scrolling .book-card,
-body.is-scrolling .island-shell,
-body.is-scrolling .showcase-card,
 body[data-performance="reduced"] .site-header__nav,
 body[data-performance="reduced"] .book-card,
 body[data-performance="reduced"] .island-shell,
@@ -2529,17 +2528,6 @@ body[data-performance="reduced"] .animated-backdrop__orb,
 body[data-performance="reduced"] .animated-backdrop__ribbon,
 body[data-performance="reduced"] .animated-backdrop__sparkles {
   display: none;
-}
-
-body.is-scrolling .icon-chip,
-body.is-scrolling .pill-button,
-body.is-scrolling .action-button,
-body.is-scrolling .text-button,
-body.is-scrolling .calendar-card-action,
-body.is-scrolling .preset-card,
-body.is-scrolling .animation-row,
-body.is-scrolling .tint-swatch {
-  transition: none !important;
 }
 
 .animated-backdrop--compact .animated-backdrop__veil,
