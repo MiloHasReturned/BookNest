@@ -1533,6 +1533,12 @@ textarea {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--theme-accent) 14%, transparent);
 }
 
+.animation-row:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  transform: none;
+}
+
 .quick-actions-row,
 .toggle-row,
 .avatar-picker-row,
@@ -2378,6 +2384,17 @@ textarea {
     radial-gradient(circle at 16% 16%, color-mix(in oklab, var(--theme-border-start) 48%, transparent), transparent 34%),
     radial-gradient(circle at 84% 18%, color-mix(in oklab, var(--theme-border-end) 44%, transparent), transparent 36%),
     radial-gradient(circle at 52% 88%, color-mix(in oklab, var(--theme-border-mid) 30%, transparent), transparent 42%),
+    linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
+}
+
+.animated-backdrop[data-effects="calm"] {
+  transform: none;
+}
+
+.animated-backdrop[data-effects="calm"] .animated-backdrop__base {
+  background:
+    radial-gradient(circle at 20% 18%, color-mix(in oklab, var(--theme-border-start) 22%, transparent), transparent 30%),
+    radial-gradient(circle at 82% 12%, color-mix(in oklab, var(--theme-border-end) 18%, transparent), transparent 32%),
     linear-gradient(135deg, var(--theme-bg-top), var(--theme-bg-bottom));
 }
 

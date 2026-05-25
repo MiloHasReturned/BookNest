@@ -71,17 +71,19 @@ function RootDocument({ children }: { children: ReactNode }) {
           <Header />
           {children}
           <Footer />
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
+          {import.meta.env.DEV ? (
+            <TanStackDevtools
+              config={{
+                position: 'bottom-right',
+              }}
+              plugins={[
+                {
+                  name: 'Tanstack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          ) : null}
           <Scripts />
         </BookNestProvider>
       </body>

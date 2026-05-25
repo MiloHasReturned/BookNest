@@ -26,6 +26,8 @@ export type BackgroundAnimationStyle =
   | 'executiveMist'
   | 'graphiteHalo'
 
+export type BackgroundEffectsMode = 'calm' | 'fancy'
+
 export type AppTheme = {
   backgroundTop: ThemeColor
   backgroundBottom: ThemeColor
@@ -37,6 +39,7 @@ export type AppTheme = {
   borderEnd: ThemeColor
   accent: ThemeColor
   animationStyle: BackgroundAnimationStyle
+  backgroundEffects?: BackgroundEffectsMode
 }
 
 export type ThemePreset = {
@@ -168,6 +171,7 @@ export const DEFAULT_THEME: AppTheme = {
   borderEnd: '#b3edf7',
   accent: '#70ebf5',
   animationStyle: 'softGlow',
+  backgroundEffects: 'calm',
 }
 
 export const THEME_PRESETS: ThemePreset[] = [
@@ -553,6 +557,7 @@ export function applyThemeToDocument(theme: AppTheme) {
   root.style.setProperty('--theme-border-end', theme.borderEnd)
   root.style.setProperty('--theme-accent', theme.accent)
   root.dataset.animationStyle = theme.animationStyle
+  root.dataset.backgroundEffects = theme.backgroundEffects ?? 'calm'
 }
 
 export function createEmptySnapshot(theme: AppTheme = DEFAULT_THEME): BookNestSnapshot {
@@ -612,6 +617,10 @@ export function normalizeSnapshot(snapshot: Partial<BookNestSnapshot>): BookNest
       snapshot.reservationsByCalendar ?? demo.reservationsByCalendar,
     dayNotesByCalendar: snapshot.dayNotesByCalendar ?? demo.dayNotesByCalendar,
     chatByCalendar: snapshot.chatByCalendar ?? demo.chatByCalendar,
-    theme: snapshot.theme ?? demo.theme,
+    theme: {
+      ...demo.theme,
+      ...(snapshot.theme ?? {}),
+      backgroundEffects: snapshot.theme?.backgroundEffects ?? 'calm',
+    },
   }
 }

@@ -64,6 +64,7 @@ export function BookNestDashboard() {
     resetTheme,
     saveAccountProfile,
     setAnimationStyle,
+    setBackgroundEffects,
     setThemeColor,
     isBooting,
   } = useBookNest()
@@ -159,6 +160,7 @@ export function BookNestDashboard() {
             onApplyPreset={applyPreset}
             onResetTheme={resetTheme}
             onSetAnimationStyle={setAnimationStyle}
+            onSetBackgroundEffects={setBackgroundEffects}
             onSetThemeColor={setThemeColor}
           />
         ) : null}
@@ -492,6 +494,7 @@ export function BookNestDashboard() {
           onApplyPreset={applyPreset}
           onResetTheme={resetTheme}
           onSetAnimationStyle={setAnimationStyle}
+          onSetBackgroundEffects={setBackgroundEffects}
           onSetThemeColor={setThemeColor}
         />
       ) : null}
@@ -780,6 +783,7 @@ function CustomizationModal({
   onApplyPreset,
   onResetTheme,
   onSetAnimationStyle,
+  onSetBackgroundEffects,
   onSetThemeColor,
 }: {
   theme: AppTheme
@@ -787,6 +791,7 @@ function CustomizationModal({
   onApplyPreset: (presetName: string) => void
   onResetTheme: () => void
   onSetAnimationStyle: (animationStyle: AppTheme['animationStyle']) => void
+  onSetBackgroundEffects: (backgroundEffects: 'calm' | 'fancy') => void
   onSetThemeColor: (
     key:
       | 'text'
@@ -865,7 +870,7 @@ function CustomizationModal({
                 key={preset.name}
                 type="button"
                 className={`preset-card${
-                  JSON.stringify(preset.theme) === JSON.stringify(theme)
+                  themeMatchesPreset(theme, preset.theme)
                     ? ' preset-card--active'
                     : ''
                 }`}
@@ -881,7 +886,37 @@ function CustomizationModal({
 
       {activePanel === 'backgrounds' ? (
         <div className="modal-section">
-          <h3 className="section-heading">Background Animations</h3>
+          <div className="section-head">
+            <div>
+              <h3 className="section-heading">Background Animations</h3>
+              <p className="account-meta">
+                Calm mode keeps BookNest quick. Fancy mode turns the animated layers back on.
+              </p>
+            </div>
+            <label className="toggle-row toggle-row--compact">
+              <input
+                type="checkbox"
+                checked={theme.backgroundEffects === 'fancy'}
+                onChange={(event) =>
+                  onSetBackgroundEffects(event.target.checked ? 'fancy' : 'calm')
+                }
+              />
+              <span>Fancy backgrounds</span>
+            </label>
+            <button
+              type="button"
+              className="pill-button"
+              onClick={() =>
+                onSetBackgroundEffects(
+                  theme.backgroundEffects === 'fancy' ? 'calm' : 'fancy',
+                )
+              }
+            >
+              {theme.backgroundEffects === 'fancy'
+                ? 'Use Calm Backgrounds'
+                : 'Enable Fancy Backgrounds'}
+            </button>
+          </div>
           <div className="animation-list">
             {BACKGROUND_ANIMATION_STYLES.map((style) => (
               <button
@@ -890,6 +925,7 @@ function CustomizationModal({
                 className={`animation-row${
                   theme.animationStyle === style.id ? ' animation-row--active' : ''
                 }`}
+                disabled={theme.backgroundEffects !== 'fancy'}
                 onClick={() => onSetAnimationStyle(style.id)}
               >
                 <span
@@ -1196,6 +1232,13 @@ function ThemePreviewCard({
       </div>
     </div>
   )
+}
+
+function themeMatchesPreset(theme: AppTheme, presetTheme: AppTheme) {
+  const { backgroundEffects: _themeEffects, ...themeColors } = theme
+  const { backgroundEffects: _presetEffects, ...presetColors } = presetTheme
+
+  return JSON.stringify(themeColors) === JSON.stringify(presetColors)
 }
 
 function ModalShell({

@@ -10,6 +10,7 @@ import {
 import {
   type AccountProfile,
   type AppTheme,
+  type BackgroundEffectsMode,
   type BackgroundAnimationStyle,
   type BookNestSnapshot,
   type CalendarReservation,
@@ -85,6 +86,7 @@ type BookNestContextValue = {
   resetTheme: () => void
   setThemeColor: (key: keyof ColorEditableThemeKeys, value: ThemeColor) => void
   setAnimationStyle: (animationStyle: BackgroundAnimationStyle) => void
+  setBackgroundEffects: (backgroundEffects: BackgroundEffectsMode) => void
 }
 
 type ColorEditableThemeKeys = Pick<
@@ -118,6 +120,8 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
   const pendingLocalCloudSave = useRef(false)
   const cloudSaveSequence = useRef(0)
   const realtimeRefreshTimer = useRef<number | null>(null)
+  const focusRefreshTimer = useRef<number | null>(null)
+  const localSaveTimer = useRef<number | null>(null)
   const snapshotRef = useRef(snapshot)
   const realtimeEmail = snapshot.accountProfile?.email.trim().toLowerCase() ?? ''
   const realtimeCalendarIds = [
@@ -136,6 +140,12 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
     () => () => {
       if (realtimeRefreshTimer.current) {
         window.clearTimeout(realtimeRefreshTimer.current)
+      }
+      if (focusRefreshTimer.current) {
+        window.clearTimeout(focusRefreshTimer.current)
+      }
+      if (localSaveTimer.current) {
+        window.clearTimeout(localSaveTimer.current)
       }
     },
     [],
@@ -364,21 +374,28 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    function handleFocus() {
-      void refreshCloudData({ silent: true })
+    function scheduleFocusRefresh() {
+      if (focusRefreshTimer.current) {
+        return
+      }
+
+      focusRefreshTimer.current = window.setTimeout(() => {
+        focusRefreshTimer.current = null
+        void refreshCloudData({ silent: true })
+      }, 1200)
     }
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        void refreshCloudData({ silent: true })
+        scheduleFocusRefresh()
       }
     }
 
-    window.addEventListener('focus', handleFocus)
+    window.addEventListener('focus', scheduleFocusRefresh)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('focus', scheduleFocusRefresh)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [cloudReady])
@@ -481,9 +498,13 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    if (getSupabaseRealtimeClient()) {
+      return
+    }
+
     const pollTimer = window.setInterval(() => {
       void refreshCloudData({ silent: true })
-    }, 12000)
+    }, 60000)
 
     return () => {
       window.clearInterval(pollTimer)
@@ -492,7 +513,15 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyThemeToDocument(snapshot.theme)
-    saveSnapshot(snapshot)
+
+    if (localSaveTimer.current) {
+      window.clearTimeout(localSaveTimer.current)
+    }
+
+    localSaveTimer.current = window.setTimeout(() => {
+      localSaveTimer.current = null
+      saveSnapshot(snapshot)
+    }, 350)
 
     if (!cloudReady) {
       return
@@ -548,7 +577,7 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
             setCloudActivity('idle')
           }
         })
-    }, 650)
+    }, 1800)
 
     return () => {
       window.clearTimeout(saveTimer)
@@ -1038,7 +1067,10 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       startTransition(() => {
         setSnapshot((current) => ({
           ...current,
-          theme: preset.theme,
+          theme: {
+            ...preset.theme,
+            backgroundEffects: current.theme.backgroundEffects ?? 'calm',
+          },
         }))
       })
     },
@@ -1046,7 +1078,10 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
       startTransition(() => {
         setSnapshot((current) => ({
           ...current,
-          theme: THEME_PRESETS[0]!.theme,
+          theme: {
+            ...THEME_PRESETS[0]!.theme,
+            backgroundEffects: 'calm',
+          },
         }))
       })
     },
@@ -1065,6 +1100,15 @@ export function BookNestProvider({ children }: { children: ReactNode }) {
         theme: {
           ...current.theme,
           animationStyle,
+        },
+      }))
+    },
+    setBackgroundEffects(backgroundEffects) {
+      setSnapshot((current) => ({
+        ...current,
+        theme: {
+          ...current.theme,
+          backgroundEffects,
         },
       }))
     },
