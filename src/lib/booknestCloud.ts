@@ -448,15 +448,10 @@ export const createCloudCalendarInvite = createServerFn({ method: 'POST' })
       }
     }
 
-    const memberships = await getMemberships(user.email)
-    const canInvite =
-      calendar.owner_email === user.email ||
-      memberships.some((membership) => membership.calendar_id === calendarId)
-
-    if (!canInvite) {
+    if (calendar.owner_email !== user.email) {
       return {
         ok: false,
-        reason: 'not-a-member',
+        reason: 'not-owner',
       }
     }
 

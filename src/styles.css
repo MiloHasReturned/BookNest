@@ -1312,6 +1312,33 @@ textarea {
   padding: 1rem;
 }
 
+.form-alert {
+  margin: 0;
+  border: 1px solid color-mix(in oklab, #d24d57 42%, var(--line-soft));
+  border-radius: 16px;
+  background: color-mix(in oklab, #d24d57 10%, var(--theme-box));
+  color: color-mix(in oklab, #8b1d2a 78%, var(--theme-text));
+  font-weight: 750;
+  line-height: 1.45;
+  padding: 0.85rem 1rem;
+}
+
+.permission-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--theme-box) 82%, transparent);
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1;
+  padding: 0.62rem 0.8rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .calendar-card-shell {
   display: grid;
   gap: 0.55rem;

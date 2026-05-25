@@ -25,6 +25,9 @@ import {
   type ChatMessage,
   type CalendarReservation,
   buildMonthGrid,
+  calendarAccess,
+  canManageReservation,
+  findReservationConflict,
   formatChatTime,
   formatDayTitle,
   formatMonthTitle,
@@ -94,6 +97,9 @@ export function BookNestCalendarDetail({
   const canCleanCloudError = isCleanableCloudIssue(cloudIssue)
   const isTypingMessage = messageText.trim().length > 0
   const senderDisplayName = snapshot.accountProfile?.username.trim() || 'Someone'
+  const access = calendarAccess(snapshot, calendarId)
+  const isOwner = access === 'owner'
+  const [reservationConflict, setReservationConflict] = useState('')
 
   useEffect(() => {
     if (endDate < selectedDate) {
@@ -245,14 +251,18 @@ export function BookNestCalendarDetail({
                 <StatusPill activity={cloudActivity} status={cloudStatus} />
               </div>
 
-              <button
-                type="button"
-                className="pill-button"
-                onClick={() => setShowInviteModal(true)}
-              >
-                <UserPlus size={16} />
-                <span>Invite</span>
-              </button>
+              {isOwner ? (
+                <button
+                  type="button"
+                  className="pill-button"
+                  onClick={() => setShowInviteModal(true)}
+                >
+                  <UserPlus size={16} />
+                  <span>Invite</span>
+                </button>
+              ) : (
+                <span className="permission-note">Member access</span>
+              )}
             </div>
           </section>
 
@@ -342,6 +352,7 @@ export function BookNestCalendarDetail({
                   <button
                     key={dateKey}
                     type="button"
+                    aria-label={calendarDayLabel(dateKey, reservations)}
                     className={`calendar-day${
                       dateKey === selectedDate ? ' calendar-day--selected' : ''
                     }`}
@@ -418,23 +429,35 @@ export function BookNestCalendarDetail({
                         </p>
                       </div>
                       <div className="reservation-actions">
-                        <button
-                          type="button"
-                          className="icon-chip"
-                          aria-label="Edit reservation"
-                          onClick={() => setEditingReservation(reservation)}
-                        >
-                          <Ellipsis size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="pill-button pill-button--danger"
-                          onClick={() =>
-                            removeReservation(calendarId, reservation.id)
-                          }
-                        >
-                          Remove
-                        </button>
+                        {canManageReservation({
+                          access,
+                          profile: snapshot.accountProfile,
+                          reservation,
+                        }) ? (
+                          <>
+                            <button
+                              type="button"
+                              className="icon-chip"
+                              aria-label={`Edit ${reservation.title}`}
+                              onClick={() => setEditingReservation(reservation)}
+                            >
+                              <Ellipsis size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              className="pill-button pill-button--danger"
+                              onClick={() =>
+                                removeReservation(calendarId, reservation.id)
+                              }
+                            >
+                              Remove
+                            </button>
+                          </>
+                        ) : (
+                          <span className="permission-note">
+                            Managed by {reservation.person}
+                          </span>
+                        )}
                       </div>
                     </article>
                   ))}
@@ -499,18 +522,25 @@ export function BookNestCalendarDetail({
                 className="action-button action-button--primary"
                 disabled={!quickTitle.trim()}
                 onClick={() => {
-                  upsertReservation(
-                    calendarId,
-                    makeReservation({
-                      title: quickTitle,
-                      person: quickName || senderDisplayName,
-                      time: quickTime || 'All day',
-                      date: selectedDate,
-                      endDate,
-                      imageData: snapshot.accountProfile?.imageData ?? null,
-                      colorIndex: calendar.tintIndex,
-                    }),
-                  )
+                  const reservation = makeReservation({
+                    title: quickTitle,
+                    person: quickName || senderDisplayName,
+                    time: quickTime || 'All day',
+                    date: selectedDate,
+                    endDate,
+                    imageData: snapshot.accountProfile?.imageData ?? null,
+                    colorIndex: calendar.tintIndex,
+                    createdByEmail: snapshot.accountProfile?.email ?? null,
+                  })
+                  const conflict = findReservationConflict(reservations, reservation)
+
+                  if (conflict) {
+                    setReservationConflict(describeReservationConflict(conflict))
+                    return
+                  }
+
+                  setReservationConflict('')
+                  upsertReservation(calendarId, reservation)
                   setQuickTitle('')
                   setQuickName('')
                   setQuickTime('All day')
@@ -519,6 +549,11 @@ export function BookNestCalendarDetail({
                 <PlusCircle size={16} />
                 <span>Reserve for {formatShortDate(selectedDate)}</span>
               </button>
+              {reservationConflict ? (
+                <p className="form-alert" role="alert">
+                  {reservationConflict}
+                </p>
+              ) : null}
             </div>
           </section>
 
@@ -641,6 +676,7 @@ export function BookNestCalendarDetail({
                 <button
                   type="button"
                   className="icon-chip icon-chip--accent"
+                  aria-label="Send message"
                   disabled={!messageText.trim()}
                   onClick={() => {
                     sendMessage(
@@ -699,6 +735,10 @@ export function BookNestCalendarDetail({
                 throw new Error('This calendar has not saved to cloud yet. Try again in a moment.')
               }
 
+              if (result.reason === 'not-owner') {
+                throw new Error('Only the calendar owner can send invites.')
+              }
+
               throw new Error('Could not send the invite. Try again.')
             }
 
@@ -718,8 +758,14 @@ export function BookNestCalendarDetail({
           reservation={editingReservation}
           onClose={() => setEditingReservation(null)}
           onSave={(reservation) => {
+            const conflict = findReservationConflict(reservations, reservation)
+            if (conflict) {
+              return describeReservationConflict(conflict)
+            }
+
             upsertReservation(calendarId, reservation)
             setEditingReservation(null)
+            return null
           }}
         />
       ) : null}
@@ -770,7 +816,13 @@ function InviteModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-shell" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="modal-shell"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Invite to ${calendarName}`}
+        onClick={(event) => event.stopPropagation()}
+      >
         <form
           className="modal-form"
           onSubmit={(event) => {
@@ -849,21 +901,28 @@ function EditReservationModal({
 }: {
   reservation: CalendarReservation
   onClose: () => void
-  onSave: (reservation: CalendarReservation) => void
+  onSave: (reservation: CalendarReservation) => string | null
 }) {
   const [title, setTitle] = useState(reservation.title)
   const [person, setPerson] = useState(reservation.person)
   const [time, setTime] = useState(reservation.time)
   const [endDate, setEndDate] = useState(resolvedEndDate(reservation))
+  const [conflictMessage, setConflictMessage] = useState('')
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-shell" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="modal-shell"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit Reservation"
+        onClick={(event) => event.stopPropagation()}
+      >
         <form
           className="modal-form"
           onSubmit={(event) => {
             event.preventDefault()
-            onSave(
+            const conflict = onSave(
               makeReservation({
                 id: reservation.id,
                 title,
@@ -873,8 +932,11 @@ function EditReservationModal({
                 endDate,
                 imageData: reservation.imageData,
                 colorIndex: reservation.colorIndex,
+                createdByEmail: reservation.createdByEmail ?? null,
               }),
             )
+
+            setConflictMessage(conflict ?? '')
           }}
         >
           <h2 className="modal-title">Edit Reservation</h2>
@@ -906,6 +968,11 @@ function EditReservationModal({
           >
             Save Changes
           </button>
+          {conflictMessage ? (
+            <p className="form-alert" role="alert">
+              {conflictMessage}
+            </p>
+          ) : null}
         </form>
       </div>
     </div>
@@ -935,6 +1002,8 @@ function Avatar({
   return (
     <div
       className={className}
+      role="img"
+      aria-label={label}
       style={{ backgroundColor: `${getCalendarTint(4)}33`, color: getCalendarTint(4) }}
     >
       {initials || 'BN'}
@@ -998,6 +1067,30 @@ function formatTypingNames(names: string[]) {
   }
 
   return `${names[0]} and ${names.length - 1} others are typing`
+}
+
+function calendarDayLabel(dateKey: string, reservations: CalendarReservation[]) {
+  const matchingReservations = reservations.filter((reservation) =>
+    reservationIncludesDate(reservation, dateKey),
+  )
+  const dateLabel = formatDayTitle(dateKey)
+
+  if (!matchingReservations.length) {
+    return dateLabel
+  }
+
+  const reservationText = matchingReservations
+    .map((reservation) => `${reservation.title} by ${reservation.person}`)
+    .join(', ')
+
+  return `${dateLabel}, reserved: ${reservationText}`
+}
+
+function describeReservationConflict(reservation: CalendarReservation) {
+  return `This overlaps with "${reservation.title}" by ${reservation.person} on ${formatRange(
+    reservation.date,
+    resolvedEndDate(reservation),
+  )}. Choose another date range or edit the existing booking.`
 }
 
 function createTypingId() {

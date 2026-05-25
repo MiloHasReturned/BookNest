@@ -74,6 +74,7 @@ export type CalendarReservation = {
   endDate: string | null
   imageData: string | null
   colorIndex: number
+  createdByEmail?: string | null
 }
 
 export type ReplyReference = {
@@ -376,6 +377,69 @@ export function reservationIncludesDate(
 
 export function reservationSpansMultipleDays(reservation: CalendarReservation) {
   return resolvedEndDate(reservation) > reservation.date
+}
+
+export function reservationRangesOverlap(
+  left: Pick<CalendarReservation, 'date' | 'endDate'>,
+  right: Pick<CalendarReservation, 'date' | 'endDate'>,
+) {
+  return left.date <= rangeEndDate(right) && rangeEndDate(left) >= right.date
+}
+
+export function findReservationConflict(
+  reservations: CalendarReservation[],
+  candidate: CalendarReservation,
+) {
+  return reservations.find(
+    (reservation) =>
+      reservation.id !== candidate.id && reservationRangesOverlap(reservation, candidate),
+  ) ?? null
+}
+
+export function calendarAccess(
+  snapshot: Pick<BookNestSnapshot, 'calendars' | 'invitedCalendars'>,
+  calendarId: string,
+) {
+  if (snapshot.calendars.some((calendar) => calendar.id === calendarId)) {
+    return 'owner'
+  }
+
+  if (snapshot.invitedCalendars.some((calendar) => calendar.id === calendarId)) {
+    return 'member'
+  }
+
+  return 'none'
+}
+
+export function canManageReservation({
+  access,
+  profile,
+  reservation,
+}: {
+  access: 'owner' | 'member' | 'none'
+  profile: AccountProfile | null
+  reservation: CalendarReservation
+}) {
+  if (access === 'owner') {
+    return true
+  }
+
+  if (access !== 'member' || !profile) {
+    return false
+  }
+
+  const profileEmail = profile.email.trim().toLowerCase()
+  const reservationEmail = reservation.createdByEmail?.trim().toLowerCase()
+
+  if (profileEmail && reservationEmail) {
+    return profileEmail === reservationEmail
+  }
+
+  return reservation.person.trim().toLowerCase() === profile.username.trim().toLowerCase()
+}
+
+function rangeEndDate(range: Pick<CalendarReservation, 'date' | 'endDate'>) {
+  return range.endDate ?? range.date
 }
 
 export function formatMonthTitle(date: Date) {

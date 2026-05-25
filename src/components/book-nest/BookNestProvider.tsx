@@ -1104,6 +1104,7 @@ export function makeReservation(input: {
   endDate: string
   imageData: string | null
   colorIndex: number
+  createdByEmail?: string | null
 }) {
   return {
     id: input.id ?? createId(),
@@ -1114,6 +1115,7 @@ export function makeReservation(input: {
     endDate: input.endDate,
     imageData: input.imageData,
     colorIndex: input.colorIndex,
+    createdByEmail: input.createdByEmail ?? null,
   }
 }
 

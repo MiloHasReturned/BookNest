@@ -1,4 +1,4 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { ReactNode } from 'react'
@@ -35,8 +35,29 @@ export const Route = createRootRoute({
       },
     ],
   }),
+  notFoundComponent: NotFound,
   shellComponent: RootDocument,
 })
+
+function NotFound() {
+  return (
+    <main className="booknest-screen">
+      <div className="page-wrap booknest-app-shell">
+        <section className="book-card">
+          <div className="section-stack">
+            <h1 className="book-hero-title">Page not found</h1>
+            <p className="book-hero-copy">
+              That page is no longer part of BookNest.
+            </p>
+            <Link to="/" className="action-button action-button--primary">
+              Back to dashboard
+            </Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  )
+}
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
