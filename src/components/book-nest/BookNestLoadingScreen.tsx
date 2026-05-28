@@ -50,7 +50,7 @@ export function BookNestLoadingScreen({
         <div className="loading-steps">
           <LoadingStep label="Local data" value="Reading browser snapshot" />
           <LoadingStep label="Account" value="Checking Google session" />
-          <LoadingStep label="Cloud sync" value="Connecting to Supabase" />
+          <LoadingStep label="Cloud sync" value="Checking sync status" />
         </div>
       </section>
 

@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import { devtools } from '@tanstack/devtools-vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
@@ -18,7 +17,6 @@ const config = defineConfig(({ mode }) => {
       ...(isTest
         ? []
         : [
-            devtools(),
             tanstackStart(),
             nitro({
               preset: 'vercel',

@@ -149,76 +149,63 @@ function adviceForCloudIssue(area: CloudIssueArea, operation: CloudOperation) {
   switch (area) {
     case 'network':
       return {
-        title: 'Cloud connection failed',
+        title: 'Connection timed out',
         message:
-          'BookNest could not reach the cloud sync endpoint. Local browser data is still safe.',
-        likelyCause:
-          'Network outage, Vercel function cold-start failure, Supabase outage, or blocked request.',
+          'BookNest could not reach sync right now. Your changes are still saved on this device.',
+        likelyCause: 'The network connection was interrupted.',
         nextStep:
           operation === 'save'
-            ? 'Keep working locally, then use Retry Sync once the connection is stable.'
-            : 'Use Retry Sync. If it keeps failing, work offline and check Vercel/Supabase status.',
+            ? 'Keep working and try syncing again in a moment.'
+            : 'Try again in a moment, or keep working offline.',
       }
     case 'google-auth':
       return {
-        title: 'Google sign-in needs attention',
-        message: 'The Google account token could not be verified for cloud sync.',
-        likelyCause:
-          'Expired login, wrong Google Client ID env var, or OAuth audience mismatch.',
-        nextStep:
-          'Sign out, sign back in with Google, then confirm VITE_GOOGLE_CLIENT_ID and GOOGLE_CLIENT_ID match.',
+        title: 'Session expired',
+        message: 'Your sign-in session has expired.',
+        likelyCause: 'The saved sign-in session is no longer valid.',
+        nextStep: 'Sign out, then sign in again to resume cloud sync.',
       }
     case 'supabase-config':
       return {
-        title: 'Supabase is not configured',
-        message: 'The deployed backend is missing required Supabase environment variables.',
-        likelyCause: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in Vercel.',
-        nextStep:
-          'Open Vercel project settings, add the Supabase env vars, then redeploy.',
+        title: 'Sync unavailable',
+        message: 'Cloud sync is temporarily unavailable.',
+        likelyCause: 'Cloud sync is not available right now.',
+        nextStep: 'Keep working offline and try again later.',
       }
     case 'supabase-data':
       return {
-        title: 'Cloud data relationship is broken',
-        message:
-          'A calendar, invite, membership, or reservation points to missing cloud data.',
-        likelyCause:
-          'A local invite/calendar existed before the matching Supabase row was created or was deleted.',
-        nextStep:
-          'Use Clean Up Broken Local Invites, then create a fresh calendar invite from the owner account.',
+        title: 'Invite expired',
+        message: 'This invite or shared calendar is no longer available.',
+        likelyCause: 'The invite has expired or the calendar was removed.',
+        nextStep: 'Ask the calendar owner to send a new invite.',
       }
     case 'supabase-permission':
       return {
-        title: 'Cloud permission failed',
-        message: 'Supabase rejected the cloud request.',
-        likelyCause:
-          'Wrong service role key, revoked key, bad project URL, or row-level/security policy mismatch.',
-        nextStep:
-          'Check Vercel env vars against Supabase API settings and redeploy after changing keys.',
+        title: 'Session expired',
+        message: 'BookNest could not confirm your access.',
+        likelyCause: 'Your session or calendar access changed.',
+        nextStep: 'Sign in again, then try the action once more.',
       }
     case 'invite':
       return {
-        title: 'Invite action failed',
-        message: 'BookNest could not complete the calendar invite action.',
-        likelyCause:
-          'Recipient email, calendar ownership, or cloud calendar creation is not ready.',
-        nextStep:
-          'Confirm the owner is signed in, the calendar has synced, and the recipient email is correct.',
+        title: 'Invite could not be sent',
+        message: 'BookNest could not send that invite.',
+        likelyCause: 'The invite details could not be confirmed.',
+        nextStep: 'Check the email address and try again.',
       }
     case 'cloud-sync':
       return {
-        title: 'Cloud sync failed',
-        message: 'Supabase returned an error during cloud sync.',
-        likelyCause: 'A database request failed while loading or saving BookNest data.',
-        nextStep:
-          'Open technical details below and check the table/operation named in the raw message.',
+        title: 'Sync interrupted',
+        message: 'BookNest could not finish syncing.',
+        likelyCause: 'The sync request was interrupted.',
+        nextStep: 'Try again, or keep working offline for now.',
       }
     case 'unknown':
       return {
-        title: 'Unexpected BookNest error',
-        message: 'BookNest hit an error that was not classified.',
-        likelyCause: 'Unknown client, server, or data issue.',
-        nextStep:
-          'Copy the technical details and check the browser console plus Vercel function logs.',
+        title: 'Something went wrong',
+        message: 'BookNest could not complete that action.',
+        likelyCause: 'The request could not be completed.',
+        nextStep: 'Try again in a moment.',
       }
   }
 }

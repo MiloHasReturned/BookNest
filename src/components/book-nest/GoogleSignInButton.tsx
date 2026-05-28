@@ -20,7 +20,9 @@ export function GoogleSignInButton({
     let isCancelled = false
 
     if (!googleClientId) {
-      setError('Google sign-in needs VITE_GOOGLE_CLIENT_ID in Vercel.')
+      setError(
+        'Google sign-in is unavailable right now. You can create an account with email instead.',
+      )
       return
     }
 
@@ -40,7 +42,7 @@ export function GoogleSignInButton({
           cancel_on_tap_outside: true,
           callback(response) {
             if (!response.credential) {
-              setError('Google sign-in did not return an account.')
+              setError('Google sign-in was cancelled. Please try again.')
               return
             }
 
@@ -50,7 +52,7 @@ export function GoogleSignInButton({
               onSignIn(profile)
               setError(null)
             } catch {
-              setError('Google sign-in returned an unreadable account.')
+              setError('Google sign-in could not be completed. Please try again.')
             }
           },
         })
@@ -63,7 +65,9 @@ export function GoogleSignInButton({
         })
       } catch {
         if (!isCancelled) {
-          setError('Google sign-in could not load.')
+          setError(
+            'Google sign-in is unavailable right now. You can create an account with email instead.',
+          )
         }
       }
     }

@@ -39,7 +39,7 @@ import {
   formatRange,
   getCalendarTint,
 } from '#/lib/booknest'
-import { type CloudIssue, isCleanableCloudIssue } from '#/lib/cloudDiagnostics'
+import { isCleanableCloudIssue } from '#/lib/cloudDiagnostics'
 import { parseCalendarInviteParam } from '#/lib/inviteLinks'
 
 export function BookNestDashboard() {
@@ -239,9 +239,13 @@ export function BookNestDashboard() {
           {cloudStatus === 'error' && cloudError ? (
             <section className="book-card cloud-status-card rise-in">
               <div className="section-stack">
-                <h2 className="section-heading">Cloud Sync Needs Attention</h2>
+                <h2 className="section-heading">
+                  {cloudIssue?.title ?? 'Sync interrupted'}
+                </h2>
                 <p className="account-meta">{cloudError}</p>
-                <CloudIssueDetails issue={cloudIssue} />
+                {cloudIssue?.nextStep ? (
+                  <p className="account-meta">{cloudIssue.nextStep}</p>
+                ) : null}
                 <button
                   type="button"
                   className="pill-button"
@@ -255,7 +259,7 @@ export function BookNestDashboard() {
                     className="pill-button"
                     onClick={() => void clearBrokenCloudCalendars()}
                   >
-                    Clean Up Broken Local Invites
+                    Repair Invites
                   </button>
                 ) : null}
                 <button
@@ -263,7 +267,7 @@ export function BookNestDashboard() {
                   className="text-button"
                   onClick={dismissCloudError}
                 >
-                  Work offline for now
+                  Keep Working Offline
                 </button>
               </div>
             </section>
@@ -1103,7 +1107,7 @@ function AccountModal({
         className="modal-form"
         onSubmit={(event) => {
           event.preventDefault()
-          if (!username.trim()) {
+          if (!email.trim() || !username.trim()) {
             return
           }
 
@@ -1125,12 +1129,13 @@ function AccountModal({
         </div>
 
         <label className="form-field">
-          <span>Email (optional)</span>
+          <span>Email</span>
           <input
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email"
+            placeholder="you@example.com"
             type="email"
+            required
           />
         </label>
 
@@ -1178,7 +1183,7 @@ function AccountModal({
         <button
           type="submit"
           className="action-button action-button--primary"
-          disabled={!username.trim()}
+          disabled={!email.trim() || !username.trim()}
         >
           Save Account
         </button>
@@ -1295,44 +1300,6 @@ function Avatar({
 
 function EmptyMessage({ children }: { children: ReactNode }) {
   return <div className="empty-state">{children}</div>
-}
-
-function CloudIssueDetails({ issue }: { issue: CloudIssue | null }) {
-  if (!issue) {
-    return null
-  }
-
-  return (
-    <details className="debug-details">
-      <summary>Debug details</summary>
-      <dl>
-        <div>
-          <dt>Where</dt>
-          <dd>{issue.operation}</dd>
-        </div>
-        <div>
-          <dt>Source</dt>
-          <dd>{issue.area}</dd>
-        </div>
-        <div>
-          <dt>Likely cause</dt>
-          <dd>{issue.likelyCause}</dd>
-        </div>
-        <div>
-          <dt>Next step</dt>
-          <dd>{issue.nextStep}</dd>
-        </div>
-        <div>
-          <dt>Raw error</dt>
-          <dd>{issue.rawMessage}</dd>
-        </div>
-        <div>
-          <dt>Time</dt>
-          <dd>{issue.timestamp}</dd>
-        </div>
-      </dl>
-    </details>
-  )
 }
 
 async function readFileAsDataUrl(file: File) {

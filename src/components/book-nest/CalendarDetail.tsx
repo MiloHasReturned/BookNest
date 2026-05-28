@@ -39,7 +39,7 @@ import {
   resolvedEndDate,
   weekdaySymbols,
 } from '#/lib/booknest'
-import { type CloudIssue, isCleanableCloudIssue } from '#/lib/cloudDiagnostics'
+import { isCleanableCloudIssue } from '#/lib/cloudDiagnostics'
 import { createCloudCalendarInvite } from '#/lib/booknestCloud'
 import { readGoogleIdToken } from '#/lib/googleSession'
 import { createCalendarInviteUrl } from '#/lib/inviteLinks'
@@ -270,9 +270,13 @@ export function BookNestCalendarDetail({
             <section className="book-card cloud-status-card rise-in">
               <div className="section-head">
                 <div>
-                  <h2 className="section-heading">Cloud Sync Needs Attention</h2>
+                  <h2 className="section-heading">
+                    {cloudIssue?.title ?? 'Sync interrupted'}
+                  </h2>
                   <p className="account-meta">{cloudError}</p>
-                  <CloudIssueDetails issue={cloudIssue} />
+                  {cloudIssue?.nextStep ? (
+                    <p className="account-meta">{cloudIssue.nextStep}</p>
+                  ) : null}
                 </div>
                 <button
                   type="button"
@@ -287,7 +291,7 @@ export function BookNestCalendarDetail({
                     className="pill-button"
                     onClick={() => void clearBrokenCloudCalendars()}
                   >
-                    Clean Up Broken Local Invites
+                    Repair Invites
                   </button>
                 ) : null}
                 <button
@@ -295,7 +299,7 @@ export function BookNestCalendarDetail({
                   className="text-button"
                   onClick={dismissCloudError}
                 >
-                  Work offline for now
+                  Keep Working Offline
                 </button>
               </div>
             </section>
@@ -708,7 +712,7 @@ export function BookNestCalendarDetail({
 
             if (!synced) {
               throw new Error(
-                'Cloud sync is not ready yet. Check Supabase env vars, redeploy, then try inviting again.',
+                'Cloud sync is not ready yet. Try again in a moment.',
               )
             }
 
@@ -1008,44 +1012,6 @@ function Avatar({
     >
       {initials || 'BN'}
     </div>
-  )
-}
-
-function CloudIssueDetails({ issue }: { issue: CloudIssue | null }) {
-  if (!issue) {
-    return null
-  }
-
-  return (
-    <details className="debug-details">
-      <summary>Debug details</summary>
-      <dl>
-        <div>
-          <dt>Where</dt>
-          <dd>{issue.operation}</dd>
-        </div>
-        <div>
-          <dt>Source</dt>
-          <dd>{issue.area}</dd>
-        </div>
-        <div>
-          <dt>Likely cause</dt>
-          <dd>{issue.likelyCause}</dd>
-        </div>
-        <div>
-          <dt>Next step</dt>
-          <dd>{issue.nextStep}</dd>
-        </div>
-        <div>
-          <dt>Raw error</dt>
-          <dd>{issue.rawMessage}</dd>
-        </div>
-        <div>
-          <dt>Time</dt>
-          <dd>{issue.timestamp}</dd>
-        </div>
-      </dl>
-    </details>
   )
 }
 

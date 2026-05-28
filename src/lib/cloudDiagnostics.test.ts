@@ -13,7 +13,7 @@ describe('cloud diagnostics', () => {
     })
 
     expect(issue.area).toBe('network')
-    expect(issue.title).toContain('Cloud connection')
+    expect(issue.title).toBe('Connection timed out')
     expect(isTransientFetchError(new Error('fetch failed'))).toBe(true)
   })
 
@@ -30,13 +30,13 @@ describe('cloud diagnostics', () => {
     expect(isCleanableCloudIssue(issue)).toBe(true)
   })
 
-  it('classifies missing Supabase env vars as config issues', () => {
+  it('classifies missing sync config as config issues', () => {
     const issue = createCloudIssue({
       operation: 'load',
       error: new Error('Supabase backend is not configured.'),
     })
 
     expect(issue.area).toBe('supabase-config')
-    expect(issue.nextStep).toContain('Vercel')
+    expect(issue.nextStep).toContain('offline')
   })
 })

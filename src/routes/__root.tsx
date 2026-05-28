@@ -1,6 +1,4 @@
 import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 import type { ReactNode } from 'react'
 import { BookNestPerformanceMode } from '#/components/book-nest/BookNestPerformanceMode'
 import { BookNestProvider } from '#/components/book-nest/BookNestProvider'
@@ -71,19 +69,6 @@ function RootDocument({ children }: { children: ReactNode }) {
           <Header />
           {children}
           <Footer />
-          {import.meta.env.DEV ? (
-            <TanStackDevtools
-              config={{
-                position: 'bottom-right',
-              }}
-              plugins={[
-                {
-                  name: 'Tanstack Router',
-                  render: <TanStackRouterDevtoolsPanel />,
-                },
-              ]}
-            />
-          ) : null}
           <Scripts />
         </BookNestProvider>
       </body>
